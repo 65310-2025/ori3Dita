@@ -93,7 +93,8 @@ const downloadSVG = (projectedFaces: [number,number][][]) => {
         // Scale and center
         const sx = (x - offsetX) * scale;
         const sy = (y - offsetY) * scale;
-        return `${sx},${sy}`;
+
+        return `${-sy},${-sx}`;
       })
       .join(" ");
     polygon.setAttribute("points", points);

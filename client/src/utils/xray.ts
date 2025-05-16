@@ -1,7 +1,7 @@
 import { NumberKeyframeTrack } from "three";
 import { Fold } from "../types/fold";
 
-const DISTORTION = 0.00; // how much to distort the face when folding
+const DISTORTION = 0.001; // how much to distort the face when folding
 
 export function getFaces(oldfold: Fold): Fold {
     const fold = structuredClone(oldfold);
