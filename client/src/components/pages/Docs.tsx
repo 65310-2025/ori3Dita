@@ -149,7 +149,7 @@ const Docs: React.FC = () => {
                     <td>Zoom in/out</td>
                   </tr>
                   <tr>
-                    <td>Option + Drag</td>
+                    <td>Alt + Drag (Option + Drag on Mac)</td>
                     <td>Pan</td>
                   </tr>
                 </tbody>
