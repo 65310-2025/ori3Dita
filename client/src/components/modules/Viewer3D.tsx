@@ -290,6 +290,16 @@ export const Viewer3D: React.FC<Viewer3DProps> = ({ cp, setCP, cpRef }) => {
       if (event.key === "b") {
         render()
       }
+      if (event.key === "p") {
+        //download the current cp as a json object
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(cpRef.current));
+        const downloadAnchorNode = document.createElement("a");
+        downloadAnchorNode.setAttribute("href", dataStr);
+        downloadAnchorNode.setAttribute("download", "cp.json");
+        document.body.appendChild(downloadAnchorNode); // required for firefox
+        downloadAnchorNode.click();
+        downloadAnchorNode.remove();
+      }
       if (event.key === "-") {
         setRootFaceIndex(Math.max(rootFaceIndexRef.current - 1, 0));
         console.log("Root face index: ", rootFaceIndexRef.current);
