@@ -737,16 +737,16 @@ export const CPCanvas: React.FC<CPCanvasProps> = ({ cp, setCP, cpRef }) => {
       if (mv_keys.includes(event.key as MvKey)) {
         setMvMode(mv_map[event.key as MvKey]);
       }
-      if (event.key === "0"){
-        // download the cp as a json file
-        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(cp));
-        const downloadAnchorNode = document.createElement("a");
-        downloadAnchorNode.setAttribute("href", dataStr);
-        downloadAnchorNode.setAttribute("download", "cp.json");
-        document.body.appendChild(downloadAnchorNode); // required for firefox
-        downloadAnchorNode.click();
-        downloadAnchorNode.remove();
-      }
+      // if (event.key === "0"){
+      //   // download the cp as a json file
+      //   const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(cp));
+      //   const downloadAnchorNode = document.createElement("a");
+      //   downloadAnchorNode.setAttribute("href", dataStr);
+      //   downloadAnchorNode.setAttribute("download", "cp.json");
+      //   document.body.appendChild(downloadAnchorNode); // required for firefox
+      //   downloadAnchorNode.click();
+      //   downloadAnchorNode.remove();
+      // }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => {

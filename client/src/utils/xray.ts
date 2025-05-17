@@ -222,6 +222,81 @@ export function getFoldedFaces(oldfold: Fold, root_index: number = 0): [number, 
     return foldedFaces
 }
 
+export function projectTo2D(
+    vertices: [number, number, number][][],
+    cameraPosition: [number, number, number],
+): [number, number][][]{
+    const [cx, cy, cz] = cameraPosition;
+
+    // Step 1: Normalize the camera vector
+    const cameraMag = Math.hypot(cx, cy, cz);
+    const cam: [number,number,number] = [cx / cameraMag, cy / cameraMag, cz / cameraMag];
+
+    // Step 2: Create orthonormal basis (u, v) perpendicular to cam
+    // Pick an arbitrary vector that is not parallel to cam
+    const up: [number, number, number] = Math.abs(cam[0]) < 0.9 ? [1, 0, 0] as [number, number, number] : [0, 1, 0] as [number, number, number];
+
+    // u = (up x cam), normalized
+    const u = normalize(cross(up, cam) as [number, number, number]);
+
+    // v = (cam x u), normalized (should already be unit if cam and u are unit)
+    const v = normalize(cross(cam, u) as [number, number, number]);
+
+    // Step 3: Project each vertex onto the (u,v) basis
+    const projected: [number, number][][] = vertices.map(face =>
+        face.map(([x, y, z]) => {
+            const dx = x;
+            const dy = y;
+            const dz = z;
+            return [
+                dx * u[0] + dy * u[1] + dz * u[2], // dot with u
+                dx * v[0] + dy * v[1] + dz * v[2], // dot with v
+            ];
+        })
+    );
+
+    // Step 4: For each face, take the distance of its center to the camera, then sort the faces by that distance (farther faces first)
+    // const faceCenters = projected.map(face => {
+    //     const n = face.length;
+    //     const sum = face.reduce(
+    //         (acc, [x, y]) => [acc[0] + x, acc[1] + y],
+    //         [0, 0]
+    //     );
+    //     return [sum[0] / n, sum[1] / n];
+    // });
+
+    // Compute 3D centers for accurate depth sorting
+    const faceCenters3D = vertices.map(face => {
+        const n = face.length;
+        const sum = face.reduce(
+            (acc, [x, y, z]) => [acc[0] + x, acc[1] + y, acc[2] + z],
+            [0, 0, 0]
+        );
+        return [sum[0] / n, sum[1] / n, sum[2] / n];
+    });
+
+    // Compute distance along the camera vector for each face center
+    const distances = faceCenters3D.map(([x, y, z]) => {
+        const dx = x - cx;
+        const dy = y - cy;
+        const dz = z - cz;
+        // Project (dx, dy, dz) onto the normalized camera vector
+        return dx * cam[0] + dy * cam[1] + dz * cam[2];
+    });
+
+    // Sort indices by distance descending (farther faces first)
+    const sortedIndices = distances
+        .map((d, i) => [d, i] as [number, number])
+        .sort((a, b) => a[0]- b[0])
+        .map(([, i]) => i);
+
+    // Reorder projected faces by sorted indices
+    const sortedProjected = sortedIndices.map(i => projected[i]);
+    return sortedProjected;
+}
+
+
+
 //=====
 // math helper functions
 
@@ -335,3 +410,15 @@ function subtract([x1, y1]: [number, number], [x2, y2]: [number, number]): [numb
     return [x1 - x2, y1 - y2];
 }
 
+function cross(a: [number, number, number], b: [number, number, number]): [number, number, number] {
+    return [
+        a[1] * b[2] - a[2] * b[1],
+        a[2] * b[0] - a[0] * b[2],
+        a[0] * b[1] - a[1] * b[0],
+    ];
+}
+
+function normalize(v: [number, number, number]): [number, number, number] {
+    const mag = Math.hypot(v[0], v[1], v[2]);
+    return [v[0] / mag, v[1] / mag, v[2] / mag];
+}

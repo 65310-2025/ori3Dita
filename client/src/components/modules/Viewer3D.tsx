@@ -6,7 +6,7 @@ import React, {
   useState,
 } from "react";
 import { Fold } from "../../types/fold";
-import { getFaces,getFoldedFaces } from "../../utils/xray";
+import { getFaces,getFoldedFaces, projectTo2D } from "../../utils/xray";
 
 
 import * as THREE from "three";
@@ -39,6 +39,82 @@ const polygon3D = (vertices:[number,number,number][]) => {
   const outline = new THREE.LineSegments(edges, lineMaterial);
   polygon.add(outline);
   return polygon;
+}
+const isClockwise = (pts: [number, number][]) => {
+  let sum = 0;
+  for (let i = 0; i < pts.length; i++) {
+    const [x1, y1] = pts[i];
+    const [x2, y2] = pts[(i + 1) % pts.length];
+    sum += (x2 - x1) * (y2 + y1);
+  }
+  return sum > 0;
+};
+const downloadSVG = (projectedFaces: [number,number][][]) => {
+  // Create an SVG element
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("width", "500");
+  svg.setAttribute("height", "500");
+  svg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+
+  // Create a group for the polygons
+  const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+  g.setAttribute("transform", "translate(250,250)"); // Center the polygons
+
+  // Find the bounding box of all points
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  projectedFaces.forEach(face => {
+    face.forEach(([x, y]) => {
+      if (x < minX) minX = x;
+      if (y < minY) minY = y;
+      if (x > maxX) maxX = x;
+      if (y > maxY) maxY = y;
+    });
+  });
+
+  // Compute scale factor to fit faces within 500x500 (with some padding)
+  const padding = 20;
+  const width = maxX - minX;
+  const height = maxY - minY;
+  const scale = Math.min(
+    (500 - 2 * padding) / width,
+    (500 - 2 * padding) / height
+  );
+
+  // Center after scaling
+  const offsetX = (minX + maxX) / 2;
+  const offsetY = (minY + maxY) / 2;
+
+  // Sort faces by their average z height based on their order in projectedFaces (lowest index = lowest z)
+  // Since projectedFaces is already ordered, we can assign a z-index based on the array index.
+  projectedFaces.forEach((face, idx) => {
+    const polygon = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+    const points = face
+      .map(([x, y]) => {
+        // Scale and center
+        const sx = (x - offsetX) * scale;
+        const sy = (y - offsetY) * scale;
+
+        return `${-sy},${-sx}`;
+      })
+      .join(" ");
+    polygon.setAttribute("points", points);
+    // if the points in the face are in clockwise order, fill with grey, else fill with white
+    polygon.setAttribute("fill", isClockwise(face) ? "grey" : "white");
+    polygon.setAttribute("stroke", "black");
+    // Set z-index using SVG's stacking order (appendChild order)
+    // Lower index faces are appended first, so they appear below higher index faces
+    g.appendChild(polygon);
+  });
+
+  svg.appendChild(g);
+
+  // Create a blob from the SVG and download it
+  const blob = new Blob([svg.outerHTML], { type: "image/svg+xml" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "projected_faces.svg";
+  a.click();
 }
 
 const faceMaterial = new THREE.MeshBasicMaterial({
@@ -221,6 +297,21 @@ export const Viewer3D: React.FC<Viewer3DProps> = ({ cp, setCP, cpRef }) => {
       if (event.key === "=") {
         setRootFaceIndex(rootFaceIndexRef.current + 1);
         console.log("Root face index: ", rootFaceIndexRef.current);
+      }
+      if (event.key === "n") {
+        // Console log the current camera position
+        if (cameraRef.current && cpRef.current) {
+          console.log("Camera position: ", cameraRef.current.position);
+          console.log("Camera rotation: ", cameraRef.current.rotation);
+
+          const projectedFaces = projectTo2D(
+            getFoldedFaces(cpRef.current, rootFaceIndexRef.current),
+            [cameraRef.current.position.x,cameraRef.current.position.y,cameraRef.current.position.z]
+          );
+          console.log("Projected faces: ", projectedFaces);
+          // now download as svg
+          downloadSVG(projectedFaces);
+        }
       }
     };
 

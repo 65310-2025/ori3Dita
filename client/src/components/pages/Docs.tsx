@@ -189,7 +189,6 @@ const Docs: React.FC = () => {
                   </tr>
                 </tbody>
               </table>
-              {/* option drag: pan <br /> */}
             </p>
           </div>
         </div>

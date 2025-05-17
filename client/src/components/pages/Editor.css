@@ -1,17 +1,46 @@
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
 .Editor {
-    display: flex;
-    width: 100%;
-    height: 100vh;
+  display: flex;
+  width: 100%;
+  height: 100vh;
 }
 
 .Editor-sidebar {
   width: 40vw;
-  height:100%;
+  height: 100%;
   display: flex;
   flex-direction: column;
+  /* No overflow: auto or scroll here */
 }
+
 .Viewer-container {
-  flex:1;
+  flex: 1 1 auto;
   width: 100%;
   display: flex;
+  /* Remove height if present */
+}
+
+.viewer-buttons {
+  height: 80px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  flex: 0 0 auto;
+  /* Remove min-height or max-height if present */
+}
+button {
+  background-color: var(--primary-light);
+  color: var(--text-color);
+  border: none;
+  padding: 10px;
+  font-size: 1.2rem;
+  cursor: pointer;
+  /* Remove flex: 1; */
 }
