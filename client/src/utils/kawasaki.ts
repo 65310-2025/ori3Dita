@@ -104,7 +104,9 @@ export function makeKawasakiFoldable(
   });
   //for each copy, multiply the matrices to get a net rotation
   const netMatrices = rotationMatricesCopies.map((rotationMatrices) =>
-    matrices.multiplyMatricesList(rotationMatrices.map(({theta,rho, matrix }) => matrix)),
+    matrices.multiplyMatricesList(
+      rotationMatrices.map(({ theta, rho, matrix }) => matrix),
+    ),
   );
 
   console.log("Net matrices: ", netMatrices);

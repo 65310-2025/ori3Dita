@@ -5,25 +5,28 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { Fold } from "../../types/fold";
-import { getFaces,getFoldedFaces, projectTo2D } from "../../utils/xray";
-
 
 import * as THREE from "three";
 // import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 
+import { Fold } from "../../types/fold";
+import { getFaces, getFoldedFaces, projectTo2D } from "../../utils/xray";
+
 export interface Viewer3DProps {
-  cp: Fold|null; // Replace 'any' with the appropriate type for 'cp'
+  cp: Fold | null; // Replace 'any' with the appropriate type for 'cp'
   setCP: (cp: Fold) => void;
   cpRef: RefObject<Fold | null>;
 }
 
-const polygon3D = (vertices:[number,number,number][]) => {
-  // Create a geometry from a set of vertices. Assume the vertices are in 3d space and are in circular order for easy triangulation. 
+const polygon3D = (vertices: [number, number, number][]) => {
+  // Create a geometry from a set of vertices. Assume the vertices are in 3d space and are in circular order for easy triangulation.
   const geometry = new THREE.BufferGeometry();
   const verticesArray = new Float32Array(vertices.flat());
-  geometry.setAttribute("position", new THREE.BufferAttribute(verticesArray, 3));
+  geometry.setAttribute(
+    "position",
+    new THREE.BufferAttribute(verticesArray, 3),
+  );
   const indices = [];
   for (let i = 1; i < vertices.length - 1; i++) {
     indices.push(0, i, i + 1);
@@ -39,7 +42,7 @@ const polygon3D = (vertices:[number,number,number][]) => {
   const outline = new THREE.LineSegments(edges, lineMaterial);
   polygon.add(outline);
   return polygon;
-}
+};
 const isClockwise = (pts: [number, number][]) => {
   let sum = 0;
   for (let i = 0; i < pts.length; i++) {
@@ -49,7 +52,7 @@ const isClockwise = (pts: [number, number][]) => {
   }
   return sum > 0;
 };
-const downloadSVG = (projectedFaces: [number,number][][]) => {
+const downloadSVG = (projectedFaces: [number, number][][]) => {
   // Create an SVG element
   const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
   svg.setAttribute("width", "500");
@@ -61,8 +64,11 @@ const downloadSVG = (projectedFaces: [number,number][][]) => {
   g.setAttribute("transform", "translate(250,250)"); // Center the polygons
 
   // Find the bounding box of all points
-  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-  projectedFaces.forEach(face => {
+  let minX = Infinity,
+    minY = Infinity,
+    maxX = -Infinity,
+    maxY = -Infinity;
+  projectedFaces.forEach((face) => {
     face.forEach(([x, y]) => {
       if (x < minX) minX = x;
       if (y < minY) minY = y;
@@ -77,7 +83,7 @@ const downloadSVG = (projectedFaces: [number,number][][]) => {
   const height = maxY - minY;
   const scale = Math.min(
     (500 - 2 * padding) / width,
-    (500 - 2 * padding) / height
+    (500 - 2 * padding) / height,
   );
 
   // Center after scaling
@@ -87,7 +93,10 @@ const downloadSVG = (projectedFaces: [number,number][][]) => {
   // Sort faces by their average z height based on their order in projectedFaces (lowest index = lowest z)
   // Since projectedFaces is already ordered, we can assign a z-index based on the array index.
   projectedFaces.forEach((face, idx) => {
-    const polygon = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+    const polygon = document.createElementNS(
+      "http://www.w3.org/2000/svg",
+      "polygon",
+    );
     const points = face
       .map(([x, y]) => {
         // Scale and center
@@ -115,19 +124,19 @@ const downloadSVG = (projectedFaces: [number,number][][]) => {
   a.href = url;
   a.download = "projected_faces.svg";
   a.click();
-}
+};
 
 const faceMaterial = new THREE.MeshBasicMaterial({
   color: 0x00ffff,
   transparent: true,
   opacity: 0.2,
-  side: THREE.FrontSide//THREE.DoubleSide,
+  side: THREE.FrontSide, //THREE.DoubleSide,
 });
 const faceMaterialBack = new THREE.MeshBasicMaterial({
   color: 0xffff00,
   transparent: true,
   opacity: 0.2,
-  side: THREE.BackSide, 
+  side: THREE.BackSide,
 });
 const lineMaterial = new THREE.LineBasicMaterial({
   color: 0x000000,
@@ -140,7 +149,6 @@ export const Viewer3D: React.FC<Viewer3DProps> = ({ cp, setCP, cpRef }) => {
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null); // Ref for the camera
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null); // Ref for the renderer
 
-
   const [rootFaceIndex, setRootFaceIndex] = useState<number>(0);
   const rootFaceIndexRef = useRef<number>(0);
   // Update rootFaceIndexRef whenever rootFaceIndex changes
@@ -148,11 +156,9 @@ export const Viewer3D: React.FC<Viewer3DProps> = ({ cp, setCP, cpRef }) => {
     rootFaceIndexRef.current = rootFaceIndex;
   }, [rootFaceIndex]);
 
-
   // Set up the 3D scene
   useEffect(() => {
     if (!mountRef.current) return;
-
 
     // Scene
     const theme = document.documentElement.getAttribute("data-theme");
@@ -167,7 +173,7 @@ export const Viewer3D: React.FC<Viewer3DProps> = ({ cp, setCP, cpRef }) => {
       40,
       mountRef.current.clientWidth / mountRef.current.clientHeight,
       0.1,
-      1000
+      1000,
     );
     camera.position.set(1, 1, 1);
     camera.lookAt(0, 0, 0);
@@ -177,7 +183,7 @@ export const Viewer3D: React.FC<Viewer3DProps> = ({ cp, setCP, cpRef }) => {
     const renderer = new THREE.WebGLRenderer();
     renderer.setSize(
       mountRef.current.clientWidth,
-      mountRef.current.clientHeight
+      mountRef.current.clientHeight,
     );
     mountRef.current.appendChild(renderer.domElement);
     rendererRef.current = renderer; // Store the renderer in the ref
@@ -214,7 +220,7 @@ export const Viewer3D: React.FC<Viewer3DProps> = ({ cp, setCP, cpRef }) => {
     // if (cpRef.current === null) return;
     // const foldedFaces = getFoldedFaces(cpRef.current,rootFaceIndexRef.current);
     // Access and modify the scene
-    render()
+    render();
     // if (sceneRef.current) {
     //   console.log("Clearing the scene");
     //   while (sceneRef.current.children.length > 0) {
@@ -225,43 +231,42 @@ export const Viewer3D: React.FC<Viewer3DProps> = ({ cp, setCP, cpRef }) => {
     //     sceneRef.current.add(polygon);
     //   }
     // }
-  }, [cp,rootFaceIndex]);
+  }, [cp, rootFaceIndex]);
 
   // Update the background color based on the theme
   useEffect(() => {
     if (!sceneRef.current) return;
-  
+
     // Function to update the background color based on the theme
     const updateTheme = () => {
       const theme = document.documentElement.getAttribute("data-theme");
       const backgroundColor = theme === "dark" ? 0x333333 : 0xffffff;
       sceneRef.current!.background = new THREE.Color(backgroundColor);
     };
-  
+
     // Initial theme setup
     updateTheme();
-  
+
     // Create a MutationObserver to watch for changes to the `data-theme` attribute
     const observer = new MutationObserver(() => {
       updateTheme();
     });
-  
+
     // Observe changes to the `data-theme` attribute on the <html> element
     observer.observe(document.documentElement, {
       attributes: true,
       attributeFilter: ["data-theme"],
     });
-  
+
     // Cleanup the observer when the component unmounts
     return () => {
       observer.disconnect();
     };
   }, []);
 
-
-  const render = () =>{
-    if (cpRef.current=== null) return;
-    const foldedFaces = getFoldedFaces(cpRef.current,rootFaceIndexRef.current);
+  const render = () => {
+    if (cpRef.current === null) return;
+    const foldedFaces = getFoldedFaces(cpRef.current, rootFaceIndexRef.current);
 
     // Access and modify the scene
     if (sceneRef.current) {
@@ -274,13 +279,12 @@ export const Viewer3D: React.FC<Viewer3DProps> = ({ cp, setCP, cpRef }) => {
       const axesHelper = new THREE.AxesHelper(0.1);
       sceneRef.current?.add(axesHelper);
 
-      for(const face of foldedFaces) {
+      for (const face of foldedFaces) {
         const polygon = polygon3D(face);
         sceneRef.current.add(polygon);
       }
     }
-
-  }
+  };
   // Register keybinds
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -288,7 +292,7 @@ export const Viewer3D: React.FC<Viewer3DProps> = ({ cp, setCP, cpRef }) => {
         event.preventDefault();
       }
       if (event.key === "b") {
-        render()
+        render();
       }
       if (event.key === "-") {
         setRootFaceIndex(Math.max(rootFaceIndexRef.current - 1, 0));
@@ -306,7 +310,11 @@ export const Viewer3D: React.FC<Viewer3DProps> = ({ cp, setCP, cpRef }) => {
 
           const projectedFaces = projectTo2D(
             getFoldedFaces(cpRef.current, rootFaceIndexRef.current),
-            [cameraRef.current.position.x,cameraRef.current.position.y,cameraRef.current.position.z]
+            [
+              cameraRef.current.position.x,
+              cameraRef.current.position.y,
+              cameraRef.current.position.z,
+            ],
           );
           console.log("Projected faces: ", projectedFaces);
           // now download as svg
@@ -328,5 +336,3 @@ export const Viewer3D: React.FC<Viewer3DProps> = ({ cp, setCP, cpRef }) => {
     />
   );
 };
-
-

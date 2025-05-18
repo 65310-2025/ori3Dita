@@ -5,93 +5,55 @@ import * as float from "./float";
 
 export function createEdge(
   oldfold: Fold,
-  v1: [number, number], //position of click start
-  v2: [number, number], //position of click end
+  v1Ind: number,
+  v2Ind: number,
   foldAngle: number,
   assignment: string,
-  TOLERANCE: number, //because tolerance is based on pixels
-): { fold: Fold; affectedVertices: number[] } {
-  const affectedVertices: number[] = []; //so the kawasaki checker doesn't need to check every vertex every time, only the recently affected ones
-
-  if (coincidentVertices(v1, v2, TOLERANCE)) {
-    return { fold: oldfold, affectedVertices };
+): Fold {
+  if (v1Ind === v2Ind) {
+    return oldfold;
   }
 
   const fold = structuredClone(oldfold);
 
-  let v1index = -1;
-  let v2index = -1;
-
-  for (let i = 0; i < fold.vertices_coords.length; i++) {
-    const distanceToV1 = distance(fold.vertices_coords[i], v1);
+  for (let i = 0; i < fold.edges_vertices.length; i++) {
+    const edge = fold.edges_vertices[i];
     if (
-      distanceToV1 <= TOLERANCE &&
-      (v1index === -1 ||
-        distanceToV1 < distance(fold.vertices_coords[v1index], v1))
+      vertexOnEdge(fold.vertices_coords[v1Ind], {
+        v1: fold.vertices_coords[edge[0]],
+        v2: fold.vertices_coords[edge[1]],
+      })
     ) {
-      v1index = i;
+      splitEdge(fold, i, v1Ind);
+      break;
     }
-    const distanceToV2 = distance(fold.vertices_coords[i], v2);
     if (
-      distanceToV2 <= TOLERANCE &&
-      (v2index === -1 ||
-        distanceToV2 < distance(fold.vertices_coords[v2index], v2))
+      vertexOnEdge(fold.vertices_coords[v2Ind], {
+        v1: fold.vertices_coords[edge[0]],
+        v2: fold.vertices_coords[edge[1]],
+      })
     ) {
-      v2index = i;
-    }
-  }
-
-  if (v1index === -1) {
-    v1index = fold.vertices_coords.length;
-    fold.vertices_coords.push(v1);
-    fold.vertices_vertices.push([]);
-    fold.vertices_edges.push([]);
-    for (let i = 0; i < fold.edges_vertices.length; i++) {
-      const edge = fold.edges_vertices[i];
-      if (
-        vertexOnEdge(v1, {
-          v1: fold.vertices_coords[edge[0]],
-          v2: fold.vertices_coords[edge[1]],
-        })
-      ) {
-        splitEdge(fold, i, v1index);
-        break;
-      }
-    }
-  }
-  if (v2index === -1) {
-    v2index = fold.vertices_coords.length;
-    fold.vertices_coords.push(v2);
-    fold.vertices_vertices.push([]);
-    fold.vertices_edges.push([]);
-    for (let i = 0; i < fold.edges_vertices.length; i++) {
-      const edge = fold.edges_vertices[i];
-      if (
-        vertexOnEdge(v2, {
-          v1: fold.vertices_coords[edge[0]],
-          v2: fold.vertices_coords[edge[1]],
-        })
-      ) {
-        splitEdge(fold, i, v2index);
-        break;
-      }
+      splitEdge(fold, i, v2Ind);
+      break;
     }
   }
 
   const intersections: { index: number; v: [number, number] }[] = [];
   const coincidentEdges: number[] = [];
-  affectedVertices.push(v1index);
-  affectedVertices.push(v2index);
 
   // look for intersections with other vertices
   for (let i = 0; i < fold.vertices_coords.length; i++) {
-    if (i === v1index || i === v2index) {
+    if (i === v1Ind || i === v2Ind) {
       continue;
     }
     const vertex = fold.vertices_coords[i];
-    if (vertexOnEdge(vertex, { v1: v1, v2: v2 })) {
+    if (
+      vertexOnEdge(vertex, {
+        v1: fold.vertices_coords[v1Ind],
+        v2: fold.vertices_coords[v2Ind],
+      })
+    ) {
       intersections.push({ index: i, v: vertex });
-      affectedVertices.push(i);
     }
   }
 
@@ -132,7 +94,6 @@ export function createEdge(
         v: intersection,
       });
       splitEdge(fold, i, fold.vertices_coords.length - 1);
-      affectedVertices.push(fold.vertices_coords.length - 1);
     }
   }
 

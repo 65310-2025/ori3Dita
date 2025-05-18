@@ -25,7 +25,7 @@ import { ThemeContext } from "../App";
 import "./CPCanvas.css";
 
 const SNAP_TOLERANCE = 30;
-const STROKE_WIDTH = 4; //0.004;
+const STROKE_WIDTH = 4;
 const ERROR_CIRCLE_RADIUS = 10;
 const TEMP_STROKE_WIDTH = 0.002;
 const CLICK_TOLERANCE = 20;
@@ -46,10 +46,9 @@ enum Mode {
   ChangeMV, // box change mv
   EditCrease, // select specific crease, change angle
   EditVertex, // select vertex, find the kawasaki crease to add
-
 }
 
-const mode_keys = [" ", "q", "w", "e", "g", "t"] as const; //TODO: it gets confused if you have caps lock on
+const mode_keys = [" ", "q", "w", "e", "g", "t"] as const;
 const mv_keys = ["a", "s", "d", "f"] as const;
 type ModeKey = (typeof mode_keys)[number];
 type MvKey = (typeof mv_keys)[number];
@@ -85,6 +84,7 @@ const edge_colors: Record<string, Record<string, string>> = {
   },
 };
 
+// TODO: rewrite
 const inspector = (
   <div
     className="fixed bottom-0 left-0 w-full bg-gray-800 text-white p-4 flex"
@@ -157,6 +157,7 @@ const handleLeftClick = (
   setCP: (cp: Fold) => void,
 ) => {
   let clickStart: [number, number] | null = null;
+  let clickStartInd: number | null = null;
 
   const handleMouseDown = (pos: [number, number]) => {
     clickStart = pos;
@@ -166,7 +167,13 @@ const handleLeftClick = (
         pos,
         CLICK_TOLERANCE / canvas.getZoom(),
       );
-      if(nearestVertex!=-1){clickStart = cpRef.current.vertices_coords[nearestVertex]};
+      if (nearestVertex != -1) {
+        clickStart = cpRef.current.vertices_coords[nearestVertex];
+        clickStartInd = nearestVertex;
+      } else {
+        cpRef.current.vertices_coords.push(pos);
+        clickStartInd = cpRef.current.vertices_coords.length - 1;
+      }
     }
   };
 
@@ -178,7 +185,7 @@ const handleLeftClick = (
       ?.getObjects()
       .find((obj) => obj.strokeWidth === TEMP_STROKE_WIDTH); // all temp objects will be stroke 1
     if (existingTempLine) {
-      canvas.remove(existingTempLine); // Remove the existing temporary line or select or delete box
+      canvas.remove(existingTempLine);
     }
     if (modeRef.current === Mode.Drawing && clickStart) {
       const theme = document.documentElement.getAttribute("data-theme");
@@ -193,8 +200,8 @@ const handleLeftClick = (
       );
 
       if (canvas) {
-        canvas.add(tempLine); // Add the new temporary line
-        canvas.renderAll(); // Render the canvas
+        canvas.add(tempLine);
+        canvas.renderAll();
       }
     } else if (modeRef.current === Mode.Deleting && clickStart) {
       const tempBox = new Rect({
@@ -202,7 +209,7 @@ const handleLeftClick = (
         top: Math.min(clickStart[1], pos[1]),
         width: Math.abs(pos[0] - clickStart[0]),
         height: Math.abs(pos[1] - clickStart[1]),
-        fill: "rgba(255, 192, 203, 0.3)", // Light pink with transparency
+        fill: "rgba(255, 192, 203, 0.3)",
         stroke: "pink",
         strokeWidth: TEMP_STROKE_WIDTH,
         selectable: false,
@@ -210,8 +217,8 @@ const handleLeftClick = (
       });
 
       if (canvas) {
-        canvas.add(tempBox); // Add the new temporary line
-        canvas.renderAll(); // Render the canvas
+        canvas.add(tempBox);
+        canvas.renderAll();
       }
     } else if (modeRef.current === Mode.Selecting && clickStart) {
       const tempBox = new Rect({
@@ -219,7 +226,7 @@ const handleLeftClick = (
         top: Math.min(clickStart[1], pos[1]),
         width: Math.abs(pos[0] - clickStart[0]),
         height: Math.abs(pos[1] - clickStart[1]),
-        fill: "rgba(144, 238, 144, 0.3)", // Light green with transparency
+        fill: "rgba(144, 238, 144, 0.3)",
         stroke: "green",
         strokeWidth: TEMP_STROKE_WIDTH,
         selectable: false,
@@ -227,11 +234,12 @@ const handleLeftClick = (
       });
 
       if (canvas) {
-        canvas.add(tempBox); // Add the new temporary line
-        canvas.renderAll(); // Render the canvas
+        canvas.add(tempBox);
+        canvas.renderAll();
       }
     }
   };
+
   // Store the input listeners to remove them later
   const inputListeners = new Map<HTMLInputElement, EventListener>();
 
@@ -242,7 +250,6 @@ const handleLeftClick = (
     selectedVertexRef: RefObject<number | null>,
   ) => {
     const selectedVertex = selectedVertexRef.current;
-    // console.log("left click up at:", pos);
     if (clickStart === null) {
       return;
     }
@@ -255,27 +262,30 @@ const handleLeftClick = (
     }
 
     if (modeRef.current === Mode.Drawing) {
-      // console.log(clickStart,clickEnd,cpRef.current)
       if (cpRef.current) {
         const nearestVertex = findNearestVertex(
           cpRef.current,
           clickStart,
           CLICK_TOLERANCE / canvas.getZoom(),
         );
-        const clickEnd = cpRef.current.vertices_coords[nearestVertex];
-        // console.log(cpRef.current);
+        let clickEndInd = -1;
+        if (nearestVertex != -1) {
+          pos = cpRef.current.vertices_coords[nearestVertex];
+          clickEndInd = nearestVertex;
+        } else {
+          cpRef.current.vertices_coords.push(pos);
+          clickEndInd = cpRef.current.vertices_coords.length - 1;
+        }
         const output = createEdge(
           cpRef.current,
-          clickStart,
-          pos,
-          // nearestVertex!=-1? clickEnd : pos,
+          clickStartInd as number,
+          clickEndInd,
           mvmodeRef.current == MvMode.Valley
             ? Math.PI
             : mvmodeRef.current == MvMode.Mountain
               ? -Math.PI
               : 0,
           mvmodeRef.current,
-          SNAP_TOLERANCE / canvas.getZoom(),
         );
         setCP(output.fold);
       } else {
@@ -801,11 +811,15 @@ export const CPCanvas: React.FC<CPCanvasProps> = ({ cp, setCP, cpRef }) => {
     if (fabricCanvasRef.current && cp) {
       const fabricCanvas = fabricCanvasRef.current;
       let errors: number[] = [];
-      if(showKawasaki){
-        errors = Array.from(cp.vertices_coords
-          .keys()
-          .filter((index) => !checkKawasakiVertex(cp, index)));
-      } else {errors = []}
+      if (showKawasaki) {
+        errors = Array.from(
+          cp.vertices_coords
+            .keys()
+            .filter((index) => !checkKawasakiVertex(cp, index)),
+        );
+      } else {
+        errors = [];
+      }
       fabricCanvas.clear();
       console.log("rerendering");
       renderCP(

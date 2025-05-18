@@ -36,7 +36,6 @@ export function multiplyMatricesList(matrices: number[][][]): number[][] {
 }
 
 function normalizeRotationMatrix(matrix: number[][]): number[][] {
-  
   //Normalize rotation matrix to limit floating point errors using Gram-Schmidt Re-Orthogonalization
   const normalize = (v: number[]): number[] => {
     const length = Math.sqrt(v.reduce((sum, val) => sum + val * val, 0));
