@@ -8,9 +8,11 @@
 .Notfound-home-button {
   font-size: 1.5rem;
   margin: 30px;
+  padding: 10px 20px;
+  border: solid;
   border-radius: 5px;
   border-width: 1px;
-  padding: 10px 20px;
+  border-color: var(--text-color);
 }
 
 .Notfound-home-link:hover {

@@ -1,8 +1,6 @@
 import { Fold } from "../types/fold";
 import * as float from "./float";
 
-// const TOLERANCE = 0.001; //tolerance to snap to vertices
-
 export function createEdge(
   oldfold: Fold,
   v1Ind: number,

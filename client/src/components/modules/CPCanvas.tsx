@@ -510,7 +510,7 @@ const makeCanvas = (
     zoom *= 0.999 ** delta;
 
     // Clamp zoom level
-    if (zoom > 2500) zoom = 2500;
+    if (zoom > 100000) zoom = 100000;
     if (zoom < 50) zoom = 50;
 
     // Zoom to the mouse pointer

@@ -12,6 +12,7 @@ import {
 import App from "./components/App";
 import Docs from "./components/pages/Docs";
 import Editor from "./components/pages/Editor";
+import Error from "./components/pages/Error";
 import Landing from "./components/pages/Landing";
 import Library from "./components/pages/Library";
 import Login from "./components/pages/Login";
@@ -19,11 +20,12 @@ import NotFound from "./components/pages/NotFound";
 
 const router = createBrowserRouter(
   createRoutesFromElements(
-    <Route errorElement={<NotFound />} element={<App />}>
+    <Route errorElement={<Error />} element={<App />}>
       <Route path="/" element={<Landing />} />
       <Route path="/login" element={<Login />} />
       <Route path="/library" element={<Library />} />
       <Route path="/editor/:cpID" element={<Editor />} />
+      <Route path="/editor" element={<Editor />} />
       <Route path="/docs" element={<Docs />} />
       <Route path="*" element={<NotFound />} />
     </Route>,
