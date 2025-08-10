@@ -176,7 +176,7 @@ router.get("/designs/:id", async (req: Request, res: Response) => {
 
   const design = await CP.findById(req.params.id);
   if (!design) {
-    res.status(404).send({ msg: "Design not found" });
+    res.status(500).send({ msg: "Design not found" });
     return;
   }
 
@@ -191,6 +191,8 @@ router.post("/designs/:id", async (req: Request, res: Response) => {
     return;
   }
 
+  console.log(req.body);
+
   const metadata = await DesignMetadata.find({
     cpID: req.params.id,
   });
@@ -201,7 +203,7 @@ router.post("/designs/:id", async (req: Request, res: Response) => {
 
   const design = await CP.findById(req.params.id);
   if (!design) {
-    res.status(404).send({ msg: "Design not found" });
+    res.status(500).send({ msg: "Design not found" });
     return;
   }
 

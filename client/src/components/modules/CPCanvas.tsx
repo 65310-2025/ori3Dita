@@ -670,7 +670,7 @@ export interface CPCanvasProps {
   cpRef: RefObject<Fold | null>;
 }
 
-export const CPCanvas: React.FC<CPCanvasProps> = ({ cp, setCP, cpRef }) => {
+const CPCanvas: React.FC<CPCanvasProps> = ({ cp, setCP, cpRef }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fabricCanvasRef = useRef<Canvas | null>(null);
 
@@ -841,3 +841,5 @@ export const CPCanvas: React.FC<CPCanvasProps> = ({ cp, setCP, cpRef }) => {
     </div>
   );
 };
+
+export default CPCanvas;

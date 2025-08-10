@@ -3,7 +3,7 @@ import React from "react";
 import Navbar from "../modules/LandingNavbar";
 import "./NotFound.css";
 
-const NotFound: React.FC = () => {
+const Error: React.FC = () => {
   console.log("500 Internal Server Error");
   return (
     <div>
@@ -23,4 +23,4 @@ const NotFound: React.FC = () => {
   );
 };
 
-export default NotFound;
+export default Error;
