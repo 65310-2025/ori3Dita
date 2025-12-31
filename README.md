@@ -1,4 +1,4 @@
-# Ori3dta
+# Ori3Dita
 
 ### How to run this for local development
 

@@ -9,12 +9,12 @@ body,
 .Editor {
   display: flex;
   width: 100%;
-  height: 100vh;
+  height: calc(100vh - var(--header-height));
 }
 
 .Editor-sidebar {
   width: 40vw;
-  height: 100%;
+  height: calc(100vh - var(--header-height));
   display: flex;
   flex-direction: column;
   /* No overflow: auto or scroll here */

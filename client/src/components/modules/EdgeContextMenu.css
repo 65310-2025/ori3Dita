@@ -1,0 +1,56 @@
+.Edge-menu {
+  width: 250px;
+  /* height: 300px; */
+  border-radius: 25px;
+  background-color: var(--foreground);
+  position: absolute;
+  inset-block-start: 40px;
+  inset-inline-end: 40px;
+}
+
+.Edge-menu-title h3 {
+  color: var(--text-color);
+  margin: 20px 25px;
+  font-size: 1.5em;
+  font-weight: bold;
+}
+
+.Edge-menu-form {
+  padding: 0px 25px 10px 25px;
+  color: var(--text-color);
+  font-size: 1em;
+}
+
+.Edge-menu-form-text {
+  height: calc(1em + 15px);
+  color: var(--text-color);
+  font-size: 1em;
+  background: var(--background);
+  margin-top: 10px;
+  padding-left: 5px;
+}
+
+.Edge-menu-submit {
+  border: 1px solid;
+  padding: 5px;
+  border-radius: 5px;
+  margin: 20px 10px 10px 0px;
+}
+
+.Edge-menu-submit:hover {
+  background-color: var(--text-color);
+  color: var(--background);
+}
+
+.Edge-menu-close {
+  border: 1px solid;
+  padding: 5px;
+  border-radius: 5px;
+  margin: 20px 10px 10px 10px;
+  color: var(--danger-color);
+}
+
+.Edge-menu-close:hover {
+  background-color: var(--danger-color);
+  color: var(--text-color);
+}

@@ -21,7 +21,7 @@ const Landing: React.FC = () => {
             </h2>
           </div>
         </div>
-        <div className="Home-title-block">
+        <div className="Home-demo-block">
           <div className="Home-demo-text">
             <h3 className="Home-demo-text">
               Browser-based, collaborative, and open source crease pattern
@@ -36,7 +36,9 @@ const Landing: React.FC = () => {
               </button>
             </div>
           </div>
-          <img src={demo} alt="Demo" className="Home-demo-image" />
+          <div className="Home-demo-image-wrap">
+            <img src={demo} alt="Demo" className="Home-demo-image" />
+          </div>
         </div>
       </div>
     </div>

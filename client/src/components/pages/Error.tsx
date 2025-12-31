@@ -1,6 +1,6 @@
 import React from "react";
 
-import Navbar from "../modules/LandingNavbar";
+import Navbar from "../modules/ErrorNavbar";
 import "./NotFound.css";
 
 const Error: React.FC = () => {

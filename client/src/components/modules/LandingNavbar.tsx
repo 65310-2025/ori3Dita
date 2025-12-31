@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import logo from "../../../logo_text.png";
 import themeToggle from "../../assets/icons/theme-toggle.svg";
 import { ThemeContext, UserContext } from "../App";
+import { useClickOutside } from "../hooks/clickOutside";
 import "./LandingNavbar.css";
 
 const Navbar: React.FC = () => {
@@ -52,25 +53,28 @@ const Navbar: React.FC = () => {
     setDropdownVisible(!dropdownVisible);
   };
 
-  const dropdownRef = React.useRef<HTMLDivElement | null>(null);
+  const dropdownRef = useClickOutside<HTMLDivElement>(() => {
+    setDropdownVisible(false);
+  });
 
-  React.useEffect(() => {
-    // close dropdown if click outside
-    function close(e: MouseEvent) {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(e.target as Node)
-      ) {
-        setDropdownVisible(false);
-      }
-    }
-    if (dropdownVisible) {
-      window.addEventListener("click", close);
-    }
-    return function removeListener() {
-      window.removeEventListener("click", close);
-    };
-  }, [dropdownVisible]);
+  const dropdown = (
+    <div className="Navbar-links">
+      <button
+        onClick={() => {
+          navigate("/library");
+        }}
+        className="Navbar-dropdown-link"
+      >
+        Library
+      </button>
+      <button
+        onClick={handleLogoutAndNavigate}
+        className="Navbar-dropdown-link"
+      >
+        Logout
+      </button>
+    </div>
+  );
 
   const loginElement = displayName ? (
     <div className="Navbar-dropdown">
@@ -79,25 +83,7 @@ const Navbar: React.FC = () => {
           Welcome, {displayName}
         </button>
       </div>
-      <div
-        className="Navbar-links"
-        style={{ display: dropdownVisible ? "flex" : "none" }}
-      >
-        <button
-          onClick={() => {
-            navigate("/library");
-          }}
-          className="Navbar-dropdown-link"
-        >
-          Library
-        </button>
-        <button
-          onClick={handleLogoutAndNavigate}
-          className="Navbar-dropdown-link"
-        >
-          Logout
-        </button>
-      </div>
+      {dropdownVisible ? dropdown : null}
     </div>
   ) : (
     <button

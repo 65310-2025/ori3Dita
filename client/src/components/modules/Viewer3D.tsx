@@ -15,8 +15,6 @@ import { getFaces, getFoldedFaces, projectTo2D } from "../../utils/xray";
 
 export interface Viewer3DProps {
   cp: Fold | null; // Replace 'any' with the appropriate type for 'cp'
-  setCP: (cp: Fold) => void;
-  cpRef: RefObject<Fold | null>;
 }
 
 const polygon3D = (vertices: [number, number, number][]) => {
@@ -143,7 +141,7 @@ const lineMaterial = new THREE.LineBasicMaterial({
   linewidth: 2,
 });
 
-export const Viewer3D: React.FC<Viewer3DProps> = ({ cp, setCP, cpRef }) => {
+export const Viewer3D: React.FC<Viewer3DProps> = ({ cp }) => {
   const mountRef: RefObject<HTMLDivElement | null> = useRef(null);
   const sceneRef = useRef<THREE.Scene | null>(null); // Ref for the scene
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null); // Ref for the camera
@@ -217,8 +215,8 @@ export const Viewer3D: React.FC<Viewer3DProps> = ({ cp, setCP, cpRef }) => {
       const backgroundColor = theme === "dark" ? 0x333333 : 0xffffff;
       sceneRef.current.background = new THREE.Color(backgroundColor);
     }
-    // if (cpRef.current === null) return;
-    // const foldedFaces = getFoldedFaces(cpRef.current,rootFaceIndexRef.current);
+    // if (cp === null) return;
+    // const foldedFaces = getFoldedFaces(cp,rootFaceIndexRef.current);
     // Access and modify the scene
     render();
     // if (sceneRef.current) {
@@ -265,8 +263,8 @@ export const Viewer3D: React.FC<Viewer3DProps> = ({ cp, setCP, cpRef }) => {
   }, []);
 
   const render = () => {
-    if (cpRef.current === null) return;
-    const foldedFaces = getFoldedFaces(cpRef.current, rootFaceIndexRef.current);
+    if (cp === null) return;
+    const foldedFaces = getFoldedFaces(cp, rootFaceIndexRef.current);
 
     // Access and modify the scene
     if (sceneRef.current) {
@@ -304,12 +302,12 @@ export const Viewer3D: React.FC<Viewer3DProps> = ({ cp, setCP, cpRef }) => {
       }
       if (event.key === "n") {
         // Console log the current camera position
-        if (cameraRef.current && cpRef.current) {
+        if (cameraRef.current && cp) {
           console.log("Camera position: ", cameraRef.current.position);
           console.log("Camera rotation: ", cameraRef.current.rotation);
 
           const projectedFaces = projectTo2D(
-            getFoldedFaces(cpRef.current, rootFaceIndexRef.current),
+            getFoldedFaces(cp, rootFaceIndexRef.current),
             [
               cameraRef.current.position.x,
               cameraRef.current.position.y,

@@ -47,8 +47,8 @@ const Docs: React.FC = () => {
               <br />
               To report a bug, request a feature, or make a pull request, all
               source code is available at the following Github repository:{" "}
-              <a href="https://github.com/65310-2025/ori3dta">
-                https://github.com/65310-2025/ori3dta
+              <a href="https://github.com/65310-2025/ori3Dita">
+                https://github.com/65310-2025/ori3Dita
               </a>
               .
             </p>

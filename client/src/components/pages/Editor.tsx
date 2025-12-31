@@ -4,7 +4,7 @@ import { Spin } from "antd";
 import { useNavigate, useParams } from "react-router-dom";
 
 import { ServerCPDto } from "../../../../dto/dto";
-import { CP } from "../../types/fold";
+import { CP } from "../../types/cp";
 import { convertServerCPDto, convertToClientCPDto } from "../../utils/cp";
 import { get, post } from "../../utils/requests";
 import { UserContext } from "../App";
@@ -83,11 +83,9 @@ const Editor: React.FC = () => {
     <>
       <Navbar />
       <div className="Editor">
-        <CPCanvas cp={cp} setCP={setCP} cpRef={cpRef} />
+        <CPCanvas cp={cp} setCP={setCP} />
         <div className="Editor-sidebar">
-          <div className="Viewer-container">
-            <Viewer3D cp={cp} setCP={setCP} cpRef={cpRef} />
-          </div>
+          <div className="Viewer-container">{/*<Viewer3D cp={cp} />*/}</div>
           <div className="viewer-buttons">
             <button>Hi</button>
           </div>

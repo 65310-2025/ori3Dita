@@ -4,7 +4,9 @@
   display: flex;
   color: var(--text-color);
   font-size: 1.2rem;
-  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1); /* Adds a subtle drop shadow */
+  box-shadow: 0px 8px 8px -4px var(--shadow-color);
+  position: sticky;
+  z-index: 9999;
 }
 
 .Navbar-items {
@@ -26,6 +28,7 @@
 
 .Navbar-links {
   flex-direction: column;
+  display: flex;
 }
 
 .Navbar-link:hover {
@@ -49,7 +52,6 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  box-shadow: 0px 4px 6px var(--shadow-color);
 }
 
 .Navbar-dropdown-username-wrap {

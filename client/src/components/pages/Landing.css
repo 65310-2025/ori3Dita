@@ -36,6 +36,11 @@ p {
 
 .Home-logo {
   height: 40vh;
+  padding: 20px;
+}
+
+.Home-title-text {
+  padding: 10px 20px 10px 20px;
 }
 
 h1.Home-title-text {
@@ -47,15 +52,34 @@ h2.Home-title-text {
   margin: 0.5rem 0;
 }
 
+.Home-demo-block {
+  background: linear-gradient(
+    180deg,
+    var(--background-light) 0%,
+    var(--background-dark) 100%
+  );
+  display: flex;
+  height: max(700px, 60vh);
+  justify-content: space-around;
+  align-items: center;
+  color: var(--text-color-secondary);
+}
+
+.Home-demo-image-wrap {
+  width: 45vw;
+}
+
 .Home-demo-image {
-  height: 40vh;
+  width: calc(45vw - 60px);
+  margin: 30px;
 }
 
 .Home-demo-text {
-  width: 60vw;
+  width: 55vw;
   display: flex;
   flex-direction: column;
   align-items: center;
+  padding: 10px 20px 10px 20px;
 }
 
 h3.Home-demo-text {

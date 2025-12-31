@@ -1,4 +1,101 @@
 .Editor-canvas-wrap {
   background-color: var(--canvas-background);
   width: 60vw;
+  height: calc(100vh - var(--header-height));
+  position: relative;
+}
+
+.CP-vertex {
+  fill: var(--vertex-fill);
+  fill-opacity: 0;
+  vector-effect: non-scaling-stroke;
+}
+
+.CP-vertex:hover {
+  fill-opacity: 1;
+}
+
+.Edge {
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+
+.Edge-wrap {
+  stroke-width: 12;
+  vector-effect: non-scaling-stroke;
+  pointer-events: stroke;
+}
+
+.Edge-selected {
+  stroke-width: 6 !important;
+}
+
+.Edge-B {
+  stroke: var(--border-edge-color);
+  stroke-width: 4;
+}
+
+.Edge-A {
+  stroke: var(--aux-edge-color);
+}
+
+.Edge-M {
+  stroke: var(--mountain-edge-color);
+}
+
+.Edge-V {
+  stroke: var(--valley-edge-color);
+}
+
+.Pen-path {
+  opacity: 0.8;
+}
+
+.Editor-canvas-toolbar {
+  display: flex;
+  position: absolute;
+  background-color: rgb(var(--toolbar-bg) / 0.1);
+  border-radius: 20px;
+}
+
+#Mode-toolbar {
+  flex-direction: column;
+  inset-block-start: 50px;
+  inset-inline-start: 25px;
+}
+
+#MvMode-toolbar {
+  flex-direction: row;
+  inset-block-start: 30px;
+  inset-inline-start: 120px;
+}
+
+.Editor-canvas-modeIcon {
+  width: 32px;
+  margin: 10px;
+  filter: invert(var(--darkmode-invert));
+}
+
+.Editor-canvas-mvIcon {
+  color: var(--text-color);
+  border: 2px solid;
+  border-radius: 5px;
+  width: 32px;
+  margin: 10px;
+}
+
+.Editor-canvas-toolbar:hover {
+  background-color: rgb(var(--toolbar-bg) / 0.2);
+}
+
+.Editor-canvas-toolbar-icon-inactive {
+  opacity: 0.6;
+}
+
+.Editor-canvas-toolbar-icon-active {
+  opacity: 1;
+}
+
+.Editor-canvas-toolbar-icon-inactive:hover {
+  opacity: 0.8;
 }
