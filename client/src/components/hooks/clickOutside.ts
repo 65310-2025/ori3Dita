@@ -5,7 +5,11 @@ export const useClickOutside = <T extends HTMLElement>(handler: () => void) => {
 
   useEffect(() => {
     const close = (e: MouseEvent) => {
-      if (e.button == 0 && ref.current && !ref.current.contains(e.target as Node)) {
+      if (
+        e.button == 0 &&
+        ref.current &&
+        !ref.current.contains(e.target as Node)
+      ) {
         handler();
       }
     };

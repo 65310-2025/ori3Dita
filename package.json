@@ -23,6 +23,8 @@
   },
   "dependencies": {
     "@react-oauth/google": "^0.12.1",
+    "@react-three/drei": "^10.7.7",
+    "@react-three/fiber": "^9.5.0",
     "@tailwindcss/vite": "^4.0.8",
     "antd": "^5.24.1",
     "connect-ensure-login": "^0.1.1",

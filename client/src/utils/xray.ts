@@ -1,468 +1,227 @@
-import { NumberKeyframeTrack } from "three";
-
-import { Fold } from "../types/fold";
+import { CP, Edge, Point } from "../types/cp";
+import { Face, FoldedFace, Point3D } from "../types/xray";
+import { pointToKey, pointsEqual } from "./cp";
+import { intersectSegments } from "./geometry";
 
 const DISTORTION = 0.001; // how much to distort the face when folding
 
-export function getFaces(oldfold: Fold): Fold {
-  const fold = structuredClone(oldfold);
-  fold.faces_vertices = [];
-  fold.faces_edges = [];
-  fold.faces_faces = [];
-  fold.edges_faces = Array.from({ length: fold.edges_vertices.length }, () => ({
-    left: null,
-    right: null,
-  }));
+const getDirectedEdgeKey = (v1: Point, v2: Point) => {
+  return `Edge${pointToKey(v1)}-${pointToKey(v2)}`;
+};
 
-  const N = fold.edges_vertices.length;
-  let halfEdges: {
-    vertices: [number, number];
-    fullEdge: number;
-    index: number;
-  }[] = structuredClone(fold.edges_vertices).map(([v1, v2], index) => ({
-    vertices: [v1, v2],
-    fullEdge: index,
-    index: index,
-  }));
+const getOtherVertex = (e: Edge, v: Point) => {
+  return pointsEqual(e.vertex1, v) ? e.vertex2 : e.vertex1;
+};
 
-  halfEdges = halfEdges.concat(
-    halfEdges.map(({ vertices: [v1, v2], fullEdge }) => ({
-      vertices: [v2, v1],
-      fullEdge: fullEdge,
-      index: fullEdge + N,
-    })),
-  ); // should be 2N long
+const getEdgeAngle = (e: Edge, reference: Point): number => {
+  const other = getOtherVertex(e, reference);
+  return Math.atan2(other.y - reference.y, other.x - reference.x);
+};
 
-  // outgoing half edges from each vertex
-  let vertices_outgoingEdges: {
-    vertices: [number, number];
-    fullEdge: number;
-    index: number;
-  }[][] = Array.from({ length: fold.vertices_coords.length }, () => []);
-  for (const halfEdge of halfEdges) {
-    vertices_outgoingEdges[halfEdge.vertices[0]].push(halfEdge);
-  }
-  // sort vertices_outgoingEdges by angle
-  vertices_outgoingEdges = vertices_outgoingEdges.map((edges, vindex) =>
-    edges.sort(
-      (halfEdgeA, halfEdgeB) =>
-        angle(vindex, halfEdgeA.vertices[1], fold) -
-        angle(vindex, halfEdgeB.vertices[1], fold),
-    ),
-  );
+const isFaceClockwise = (face: Point[]): boolean => {
+  const sum = face
+    .map((p1: Point, ind: number) => {
+      const p2 = face[(ind + 1) % face.length];
+      return p1.x * p2.y - p2.x * p1.y;
+    })
+    .reduce((acc: number, curr: number) => acc + curr);
+  return sum < 0;
+};
 
-  const mutableHalfEdges = structuredClone(halfEdges);
-  while (mutableHalfEdges.length > 0) {
-    const face_vertices: number[] = [];
-    const face_edges: number[] = [];
+const traceFace = (
+  startVertex: Point,
+  startEdge: Edge,
+  edgeMap: Map<string, Edge[]>,
+  usedEdges: Set<string>,
+): Face => {
+  const face: Point[] = [];
+  const edges: Edge[] = [];
+  let currentVertex = startVertex;
+  let currentEdge = startEdge;
 
-    let currentHalfEdge = mutableHalfEdges[0];
-    mutableHalfEdges.shift();
+  do {
+    // Get next vertex
+    const nextVertex = getOtherVertex(currentEdge, currentVertex);
+    face.push(nextVertex);
+    edges.push(currentEdge);
 
-    face_vertices.push(currentHalfEdge.vertices[0]);
-    face_edges.push(currentHalfEdge.fullEdge);
+    // Mark edge as used
+    usedEdges.add(getDirectedEdgeKey(currentVertex, nextVertex));
 
-    while (true) {
-      const nextVertex: number = currentHalfEdge.vertices[1];
-      const outgoingEdges: {
-        vertices: [number, number];
-        fullEdge: number;
-        index: number;
-      }[] = vertices_outgoingEdges[nextVertex];
+    // Find next edge (next counter-clockwise edge)
+    const edgesAtVertex = edgeMap.get(pointToKey(nextVertex))!;
+    const currentIndex = edgesAtVertex.findIndex(
+      (e) => e.id === currentEdge.id,
+    );
 
-      // index in the list of outgoingEdges
-      const currentOutgoingIndex = outgoingEdges.findIndex(
-        (halfEdge) => halfEdge.vertices[1] == currentHalfEdge.vertices[0],
+    // Get the next edge in counter-clockwise order
+    const nextIndex = (currentIndex + 1) % edgesAtVertex.length;
+    currentEdge = edgesAtVertex[nextIndex];
+    currentVertex = nextVertex;
+  } while (!pointsEqual(currentVertex, startVertex));
+
+  return { border: face, edges: edges, id: crypto.randomUUID() };
+};
+
+export const findFaces = (cp: CP): Face[] => {
+  // 1. Build adjacency structure
+  const edgeMap = new Map<string, Edge[]>();
+  const pointMap = new Map<string, Point>();
+
+  cp.vertices.forEach((v) => {
+    const key = pointToKey(v);
+    edgeMap.set(key, []);
+    pointMap.set(key, v);
+  });
+
+  cp.edges.forEach((edge) => {
+    const key1 = pointToKey(edge.vertex1);
+    const key2 = pointToKey(edge.vertex2);
+    edgeMap.get(key1)!.push(edge);
+    edgeMap.get(key2)!.push(edge);
+  });
+
+  // 2. Sort edges around each vertex by angle
+  edgeMap.forEach((edges, vertexKey) => {
+    const vertex = pointMap.get(vertexKey);
+    if (!vertex) {
+      throw `Vertex ${vertexKey} not found in pointMap!`;
+    }
+    edges.sort((a, b) => {
+      const angleA = getEdgeAngle(a, vertex);
+      const angleB = getEdgeAngle(b, vertex);
+      return angleA - angleB;
+    });
+  });
+
+  // 3. Traverse to find faces
+  const faces: Face[] = [];
+  const usedEdges = new Set<string>();
+
+  cp.edges.forEach((edge) => {
+    // Try both directions
+    [edge.vertex1, edge.vertex2].forEach((startVertex) => {
+      const edgeKey = getDirectedEdgeKey(
+        startVertex,
+        getOtherVertex(edge, startVertex),
       );
 
-      currentHalfEdge =
-        outgoingEdges[
-          currentOutgoingIndex < outgoingEdges.length - 1
-            ? currentOutgoingIndex + 1
-            : 0
-        ];
+      if (usedEdges.has(edgeKey)) return;
 
-      face_vertices.push(currentHalfEdge.vertices[0]);
-      face_edges.push(currentHalfEdge.fullEdge);
-      const indexToRemove = mutableHalfEdges.findIndex(
-        (halfEdge) =>
-          halfEdge.vertices[0] === currentHalfEdge.vertices[0] &&
-          halfEdge.vertices[1] === currentHalfEdge.vertices[1],
-      );
-      if (indexToRemove !== -1) {
-        mutableHalfEdges.splice(indexToRemove, 1);
-      }
-
-      if (currentHalfEdge.vertices[1] === face_vertices[0]) {
-        break;
-      }
-    }
-    // One of the faces will be tracing the outside of the cp. We can find it and avoid adding it because its orientation will be different.
-    if (!isFaceClockwise(face_vertices, fold)) {
-      fold.faces_vertices.push(face_vertices);
-      fold.faces_edges.push(face_edges);
-    }
-  }
-
-  // Fill out edges_faces
-  // fold.faces_edges.forEach((edges, faceIndex) => {
-  //     edges.forEach((edgeIndex) => {
-  //         const edgeFaces = fold.edges_faces[edgeIndex];
-  //         if (edgeFaces.left === null) {
-  //             edgeFaces.left = faceIndex;
-  //         } else {
-  //             edgeFaces.right = faceIndex;
-  //         }
-  //     });
-  // });
-  fold.faces_edges.forEach((edges, faceIndex) => {
-    edges.forEach((edgeIndex) => {
-      const [v1, v2] = fold.edges_vertices[edgeIndex];
-      const edgeFaces = fold.edges_faces[edgeIndex];
-      const face = fold.faces_vertices[faceIndex];
-      if (isFaceToLeftOfEdge([v1, v2], face, fold)) {
-        edgeFaces.left = faceIndex;
-      } else {
-        edgeFaces.right = faceIndex;
+      const face = traceFace(startVertex, edge, edgeMap, usedEdges);
+      if (face.border.length >= 3 && isFaceClockwise(face.border)) {
+        faces.push(face);
       }
     });
   });
-  // Fill out faces_faces
-  const faceCount = fold.faces_vertices.length;
-  fold.faces_faces = Array.from({ length: faceCount }, () => []);
-  fold.edges_faces.forEach(({ left, right }) => {
-    if (left !== null && right !== null) {
-      fold.faces_faces[left].push(right);
-      fold.faces_faces[right].push(left);
-    }
-  });
 
-  return fold;
-}
+  return faces;
+};
 
-export function getFoldedFaces(
-  oldfold: Fold,
-  root_index: number = 0,
-): [number, number, number][][] {
-  const fold = getFaces(oldfold);
-  // Clip all fold.foldAngles to be between -180 and 180
-  fold.edges_foldAngle = fold.edges_foldAngle.map((angle) => {
-    while (angle > 180) angle -= 360;
-    while (angle < -180) angle += 360;
-    return angle;
-  });
+const rotateFace = (
+  face: Point3D[],
+  edge: Edge,
+  flip: number = 1,
+): Point3D[] => {
+  const { vertex1: A, vertex2: B } = edge;
 
-  // const fold = structuredClone(oldfold);
-  // For each face, get a path of edges (represented by their indices) to cross to reach the root face
-  const edgeRoutes: [number, boolean][][] = Array.from(
-    { length: fold.faces_vertices.length },
-    (_, index) => {
-      return [];
-    },
-  );
-
-  // Using fold.faces_faces, fold.faces_edges, and fold.edges_faces, create a spanning tree that starts at the root face and maps a route to the root face for each face
-  // the ith element in edgeRoutes represents the ith face as an array of edges that cross to reach the root face
-  const visited = new Array(fold.faces_vertices.length).fill(false);
-  const queue = [root_index];
-  visited[root_index] = true;
-
-  while (queue.length > 0) {
-    const currentFace = queue[0];
-    queue.shift();
-    const currentRoute = edgeRoutes[currentFace];
-
-    for (const neighbor of fold.faces_faces[currentFace]) {
-      if (!visited[neighbor]) {
-        visited[neighbor] = true;
-        queue.push(neighbor);
-
-        const edgeBetween = fold.faces_edges[currentFace].find((edge) =>
-          fold.faces_edges[neighbor].includes(edge),
-        );
-
-        if (edgeBetween !== undefined) {
-          edgeRoutes[neighbor] = [
-            ...currentRoute,
-            [
-              edgeBetween,
-              fold.edges_faces[edgeBetween].left === currentFace ? true : false,
-            ],
-          ];
-        }
-      }
-    }
-  }
-  console.log(edgeRoutes);
-  const foldedFaces: [number, number, number][][] = [];
-  for (let i = 0; i < edgeRoutes.length; i++) {
-    const edgeRoute = edgeRoutes[i];
-    const faceVertices = fold.faces_vertices[i];
-    const foldedFace = rotateFaceOverRoute(
-      faceVertices.map((v) => [
-        fold.vertices_coords[v][0],
-        fold.vertices_coords[v][1],
-        0,
-      ]),
-      edgeRoute.slice().reverse(),
-      fold,
-      i,
-    );
-    foldedFaces.push(foldedFace);
-  }
-
-  // Translate all folded faces to center around the origin
-  const allVertices = foldedFaces.flat();
-  const total = allVertices.reduce(
-    (acc, [x, y, z]) => {
-      acc[0] += x;
-      acc[1] += y;
-      acc[2] += z;
-      return acc;
-    },
-    [0, 0, 0],
-  );
-  const vertexCount = allVertices.length;
-  const center = [
-    total[0] / vertexCount,
-    total[1] / vertexCount,
-    total[2] / vertexCount,
-  ];
-
-  for (let i = 0; i < foldedFaces.length; i++) {
-    const face = foldedFaces[i];
-    for (let j = 0; j < face.length; j++) {
-      face[j][0] -= center[0];
-      face[j][1] -= center[1];
-      face[j][2] -= center[2];
-    }
-  }
-  return foldedFaces;
-}
-
-export function projectTo2D(
-  vertices: [number, number, number][][],
-  cameraPosition: [number, number, number],
-): [number, number][][] {
-  const [cx, cy, cz] = cameraPosition;
-
-  // Step 1: Normalize the camera vector
-  const cameraMag = Math.hypot(cx, cy, cz);
-  const cam: [number, number, number] = [
-    cx / cameraMag,
-    cy / cameraMag,
-    cz / cameraMag,
-  ];
-
-  // Step 2: Create orthonormal basis (u, v) perpendicular to cam
-  // Pick an arbitrary vector that is not parallel to cam
-  const up: [number, number, number] =
-    Math.abs(cam[0]) < 0.9
-      ? ([1, 0, 0] as [number, number, number])
-      : ([0, 1, 0] as [number, number, number]);
-
-  // u = (up x cam), normalized
-  const u = normalize(cross(up, cam) as [number, number, number]);
-
-  // v = (cam x u), normalized (should already be unit if cam and u are unit)
-  const v = normalize(cross(cam, u) as [number, number, number]);
-
-  // Step 3: Project each vertex onto the (u,v) basis
-  const projected: [number, number][][] = vertices.map((face) =>
-    face.map(([x, y, z]) => {
-      const dx = x;
-      const dy = y;
-      const dz = z;
-      return [
-        dx * u[0] + dy * u[1] + dz * u[2], // dot with u
-        dx * v[0] + dy * v[1] + dz * v[2], // dot with v
-      ];
-    }),
-  );
-
-  // Step 4: For each face, take the distance of its center to the camera, then sort the faces by that distance (farther faces first)
-  // const faceCenters = projected.map(face => {
-  //     const n = face.length;
-  //     const sum = face.reduce(
-  //         (acc, [x, y]) => [acc[0] + x, acc[1] + y],
-  //         [0, 0]
-  //     );
-  //     return [sum[0] / n, sum[1] / n];
-  // });
-
-  // Compute 3D centers for accurate depth sorting
-  const faceCenters3D = vertices.map((face) => {
-    const n = face.length;
-    const sum = face.reduce(
-      (acc, [x, y, z]) => [acc[0] + x, acc[1] + y, acc[2] + z],
-      [0, 0, 0],
-    );
-    return [sum[0] / n, sum[1] / n, sum[2] / n];
-  });
-
-  // Compute distance along the camera vector for each face center
-  const distances = faceCenters3D.map(([x, y, z]) => {
-    const dx = x - cx;
-    const dy = y - cy;
-    const dz = z - cz;
-    // Project (dx, dy, dz) onto the normalized camera vector
-    return dx * cam[0] + dy * cam[1] + dz * cam[2];
-  });
-
-  // Sort indices by distance descending (farther faces first)
-  const sortedIndices = distances
-    .map((d, i) => [d, i] as [number, number])
-    .sort((a, b) => a[0] - b[0])
-    .map(([, i]) => i);
-
-  // Reorder projected faces by sorted indices
-  const sortedProjected = sortedIndices.map((i) => projected[i]);
-  return sortedProjected;
-}
-
-//=====
-// math helper functions
-
-function rotateFace(
-  face: [number, number, number][],
-  edge: [[number, number], [number, number]],
-  angle: number,
-): [number, number, number][] {
-  const [A2D, B2D] = edge;
-  const A = [A2D[0], A2D[1], 0];
-  const B = [B2D[0], B2D[1], 0];
-
-  const axis = [B[0] - A[0], B[1] - A[1], B[2] - A[2]];
+  const axis = [B.x - A.x, B.y - A.y, 0];
 
   const axisLength = Math.hypot(axis[0], axis[1], axis[2]);
   if (axisLength === 0) throw new Error("Edge points must be different.");
 
-  // Normalize the axis
   const u = axis.map((v) => v / axisLength);
 
+  const angle = edge.foldAngle * (1 - DISTORTION) * flip;
   const cosTheta = Math.cos(angle);
   const sinTheta = Math.sin(angle);
 
-  const rotatedFace = face.map((P) => {
-    // P - A
-    const pRel = [P[0] - A[0], P[1] - A[1], P[2] - A[2]];
+  return face.map((p: Point3D) => {
+    const pRel = [p[0] - A.x, p[1] - A.y, p[2]];
 
-    // Cross product: u × pRel
     const cross = [
       u[1] * pRel[2] - u[2] * pRel[1],
       u[2] * pRel[0] - u[0] * pRel[2],
       u[0] * pRel[1] - u[1] * pRel[0],
     ];
 
-    // Dot product: u ⋅ pRel
     const dot = u[0] * pRel[0] + u[1] * pRel[1] + u[2] * pRel[2];
 
     // Rodrigues' rotation formula
     const rotated = [
-      A[0] +
+      A.x +
         cosTheta * pRel[0] +
         sinTheta * cross[0] +
         (1 - cosTheta) * dot * u[0],
-      A[1] +
+      A.y +
         cosTheta * pRel[1] +
         sinTheta * cross[1] +
         (1 - cosTheta) * dot * u[1],
-      A[2] +
-        cosTheta * pRel[2] +
-        sinTheta * cross[2] +
-        (1 - cosTheta) * dot * u[2],
+      cosTheta * pRel[2] + sinTheta * cross[2] + (1 - cosTheta) * dot * u[2],
     ];
 
-    return rotated as [number, number, number];
+    return rotated as Point3D;
+  });
+};
+
+interface FaceEdge {
+  face: Face;
+  edge: Edge;
+}
+
+const shouldFlip = (face: Face, edge: Edge) => {
+  const v1Ind = face.border.findIndex((p: Point) =>
+    pointsEqual(p, edge.vertex1),
+  );
+  const v2Ind = face.border.findIndex((p: Point) =>
+    pointsEqual(p, edge.vertex2),
+  );
+  return (v2Ind - v1Ind + face.border.length) % face.border.length !== 1;
+};
+
+export const foldFaces = (faces: Face[], cp: CP): FoldedFace[] => {
+  // Calculate spanning tree
+  const edgeFaces = new Map<Edge, Face[]>();
+
+  cp.edges.forEach((e: Edge) => edgeFaces.set(e, []));
+  faces.forEach((f: Face) =>
+    f.edges.forEach((e: Edge) => edgeFaces.get(e)!.push(f)),
+  );
+
+  const faceAdj = new Map<Face, FaceEdge[]>();
+  faces.forEach((f: Face) => faceAdj.set(f, []));
+  edgeFaces.forEach((fs: Face[], edge: Edge) => {
+    if (fs.length === 2) {
+      faceAdj.get(fs[0])!.push({ face: fs[1], edge: edge });
+      faceAdj.get(fs[1])!.push({ face: fs[0], edge: edge });
+    }
   });
 
-  return rotatedFace;
-}
+  const faceParent = new Map<Face, FaceEdge | null>();
+  const facesVisited = new Set<Face>();
+  const dfsFaces = (face: Face, from: FaceEdge | null = null) => {
+    faceParent.set(face, from);
+    facesVisited.add(face);
+    faceAdj.get(face)!.forEach((e: FaceEdge) => {
+      if (facesVisited.has(e.face)) return;
+      dfsFaces(e.face, { ...e, face: face });
+    });
+  };
+  dfsFaces(faces[0]);
 
-function rotateFaceOverRoute(
-  oldface: [number, number, number][],
-  edgeRoute: [number, boolean][],
-  fold: Fold,
-  faceindex: number,
-): [number, number, number][] {
-  let face = structuredClone(oldface);
-  for (let i = 0; i < edgeRoute.length; i++) {
-    const edgeIndex = edgeRoute[i][0];
-    const edge = fold.edges_vertices[edgeIndex];
-    const angle =
-      fold.edges_foldAngle[edgeIndex] *
-      (edgeRoute[i][1] ? 1 : -1) *
-      (1 - DISTORTION);
-    // const angle = fold.edges_foldAngle[edgeIndex] * (isFaceOnRight(faceindex,edgeIndex,fold)? 1 : -1);
-    face = rotateFace(
-      face,
-      [fold.vertices_coords[edge[0]], fold.vertices_coords[edge[1]]],
-      angle,
-    );
-  }
-  return face;
-}
-
-function angle(vertex1: number, vertex2: number, fold: Fold): number {
-  return Math.atan2(
-    fold.vertices_coords[vertex2][1] - fold.vertices_coords[vertex1][1],
-    fold.vertices_coords[vertex2][0] - fold.vertices_coords[vertex1][0],
-  );
-}
-
-function isFaceClockwise(vertices: number[], fold: Fold): boolean {
-  let sum = 0;
-  for (let i = 0; i < vertices.length; i++) {
-    const [x1, y1] = fold.vertices_coords[vertices[i]];
-    const [x2, y2] = fold.vertices_coords[vertices[(i + 1) % vertices.length]];
-    sum += (x2 - x1) * (y2 + y1);
-  }
-  return sum < 0;
-}
-
-function isFaceToLeftOfEdge(
-  edge: [number, number],
-  face: number[],
-  fold: Fold,
-): boolean {
-  const [v1, v2] = edge;
-  const edgeVec = subtract(fold.vertices_coords[v2], fold.vertices_coords[v1]);
-
-  for (let i = 0; i < face.length; i++) {
-    const a = face[i];
-    const b = face[(i + 1) % face.length];
-    if ((a === v1 && b === v2) || (a === v2 && b === v1)) {
-      // Found the edge in this face
-      const prevVertex = face[(i - 1 + face.length) % face.length];
-      const toPrev = subtract(
-        fold.vertices_coords[prevVertex],
-        fold.vertices_coords[v1],
-      );
-      const cross = edgeVec[0] * toPrev[1] - edgeVec[1] * toPrev[0];
-      return cross > 0; // Left if cross product is positive
+  return faces.map((f: Face) => {
+    let curFace = f;
+    let points = f.border.map((p: Point) => [p.x, p.y, 0] as Point3D);
+    let par;
+    console.log("Face", f);
+    while ((par = faceParent.get(curFace))) {
+      console.log("Folding over", par.edge);
+      const flip = shouldFlip(curFace, par.edge) ? -1 : 1;
+      points = rotateFace(points, par.edge, flip);
+      curFace = par.face;
+      console.log("Result:", points);
     }
-  }
-  return false;
-}
-function subtract(
-  [x1, y1]: [number, number],
-  [x2, y2]: [number, number],
-): [number, number] {
-  return [x1 - x2, y1 - y2];
-}
-
-function cross(
-  a: [number, number, number],
-  b: [number, number, number],
-): [number, number, number] {
-  return [
-    a[1] * b[2] - a[2] * b[1],
-    a[2] * b[0] - a[0] * b[2],
-    a[0] * b[1] - a[1] * b[0],
-  ];
-}
-
-function normalize(v: [number, number, number]): [number, number, number] {
-  const mag = Math.hypot(v[0], v[1], v[2]);
-  return [v[0] / mag, v[1] / mag, v[2] / mag];
-}
+    console.log("folded into", points);
+    return { border: points, id: f.id };
+  });
+};

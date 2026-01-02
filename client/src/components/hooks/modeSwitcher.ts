@@ -9,7 +9,7 @@ export const useModeSwitcher = <T>(
 
   const handleKeyDown = (event: React.KeyboardEvent) => {
     if (event.key === " ") {
-        event.preventDefault();
+      event.preventDefault();
     }
     if (keys.includes(event.key)) {
       setMode(map[event.key]);

@@ -3,7 +3,6 @@ Matrix related boilerplate functions
 These functions are specifically for 3x3 matrices
 These functions use radians
 */
-// import * as float from "./float";
 
 export function multiply2Matrices(a: number[][], b: number[][]): number[][] {
   const result: number[][] = [
@@ -24,7 +23,7 @@ export function multiply2Matrices(a: number[][], b: number[][]): number[][] {
 }
 
 export function multiplyMatricesList(matrices: number[][][]): number[][] {
-  //Multiply a list of matrices together and renormalize to avoid floating point errors
+  // Multiply a list of matrices together and renormalize to avoid floating point errors
   try {
     return normalizeRotationMatrix(
       matrices.reduce((acc, matrix) => multiply2Matrices(acc, matrix)),
@@ -36,7 +35,7 @@ export function multiplyMatricesList(matrices: number[][][]): number[][] {
 }
 
 function normalizeRotationMatrix(matrix: number[][]): number[][] {
-  //Normalize rotation matrix to limit floating point errors using Gram-Schmidt Re-Orthogonalization
+  // Normalize rotation matrix to limit floating point errors using Gram-Schmidt Re-Orthogonalization
   const normalize = (v: number[]): number[] => {
     const length = Math.sqrt(v.reduce((sum, val) => sum + val * val, 0));
     return v.map((val) => val / length);

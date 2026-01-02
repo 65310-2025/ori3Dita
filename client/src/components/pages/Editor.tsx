@@ -41,9 +41,7 @@ const Editor: React.FC = () => {
 
   useEffect(() => {
     get(`/api/designs/${cpID}`).then((serverCP: ServerCPDto) => {
-      console.log(serverCP);
       const convertedCP = convertServerCPDto(serverCP);
-      console.log(convertedCP);
       setCP(convertedCP);
     });
   }, [cpID]);
@@ -52,7 +50,7 @@ const Editor: React.FC = () => {
     if (!cp) {
       return;
     }
-
+    console.log("Posting CP to server", cp);
     const handler = setTimeout(() => {
       const cpData = convertToClientCPDto(cp);
       post(`/api/designs/${cpID}`, cpData)
@@ -85,7 +83,9 @@ const Editor: React.FC = () => {
       <div className="Editor">
         <CPCanvas cp={cp} setCP={setCP} />
         <div className="Editor-sidebar">
-          <div className="Viewer-container">{/*<Viewer3D cp={cp} />*/}</div>
+          <div className="Viewer-container">
+            <Viewer3D cp={cp} />
+          </div>
           <div className="viewer-buttons">
             <button>Hi</button>
           </div>

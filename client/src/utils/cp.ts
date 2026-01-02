@@ -1,5 +1,5 @@
 import { ClientCPDto, ServerCPDto } from "../../../dto/dto";
-import { CP, EdgeAssignment } from "../types/cp";
+import { CP, EdgeAssignment, Point } from "../types/cp";
 
 export const convertServerCPDto = (serverCP: ServerCPDto): CP => {
   const vertices = serverCP.vertices_coords.map((point: [number, number]) => {
@@ -31,4 +31,12 @@ export const convertToClientCPDto = (cp: CP): ClientCPDto => {
     edges_assignment: cp.edges.map((e) => e.assignment),
     edges_foldAngle: cp.edges.map((e) => e.foldAngle),
   };
+};
+
+export const pointToKey = (point: Point) => {
+  return `Point(${point.x},${point.y})`;
+};
+
+export const pointsEqual = (p1: Point, p2: Point) => {
+  return p1.x === p2.x && p1.y === p2.y;
 };

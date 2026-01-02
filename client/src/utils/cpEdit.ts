@@ -1,10 +1,19 @@
-import { CP, Point } from "../types/cp";
+import { CP, Edge, EdgeAssignment, Point } from "../types/cp";
 import { MvMode } from "../types/ui";
+import { cross, getIntersection } from "./geometry";
 
 const SNAP_TOLERANCE = 0.015;
 
 export const getSnapPoints = (cp: CP) => {
-  return cp.vertices;
+  return [
+    ...cp.vertices,
+    ...cp.edges.map((e: Edge) => {
+      return {
+        x: (e.vertex1.x + e.vertex2.x) / 2,
+        y: (e.vertex1.y + e.vertex2.y) / 2,
+      };
+    }),
+  ];
 };
 
 export const snapVertex = (snapPoints: Point[], x: number, y: number) => {
@@ -15,23 +24,6 @@ export const snapVertex = (snapPoints: Point[], x: number, y: number) => {
   };
 
   return snapPoints.find((point: Point) => distance(point) <= SNAP_TOLERANCE);
-};
-
-// Compute the cross product of \vec{AB} and \vec{AC}
-const cross = (a: Point, b: Point, c: Point) => {
-  return (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
-};
-
-// Compute the intersection of line AB and CD, assumes lines are not parallel
-const intersect = (a: Point, b: Point, c: Point, d: Point) => {
-  const a1 = b.y - a.y;
-  const b1 = a.x - b.x;
-  const c1 = a.x * a1 + a.y * b1;
-  const a2 = d.y - c.y;
-  const b2 = c.x - d.x;
-  const c2 = c.x * a2 + c.y * b2;
-  const det = a1 * b2 - a2 * b1;
-  return { x: (b2 * c1 - b1 * c2) / det, y: (a1 * c2 - a2 * c1) / det };
 };
 
 export const addEdge = (
@@ -77,11 +69,11 @@ export const addEdge = (
     }
   };
 
-  const getParam = (p: Point, vertical: bool) => {
+  const getParam = (p: Point, vertical: boolean) => {
     return vertical ? p.y : p.x;
   };
 
-  const newEdges = [];
+  const newEdges: Edge[] = [];
   const breakPoints = [vertex1, vertex2];
   const orderNew = orderEdge(vertex1, vertex2);
   cp.edges.forEach((edge: Edge) => {
@@ -92,7 +84,7 @@ export const addEdge = (
     const orderOld = orderEdge(edge.vertex1, edge.vertex2);
 
     if (Math.sign(c1 * c2) === -1 && Math.sign(c3 * c4) === -1) {
-      const intersection = intersect(
+      const intersection = getIntersection(
         vertex1,
         vertex2,
         edge.vertex1,
@@ -235,7 +227,7 @@ export const addEdge = (
       newEdges.push({
         vertex1: p,
         vertex2: breakPoints[idx + 1],
-        assignment: mvMode as EdgeAssignment,
+        assignment: mvMode as unknown as EdgeAssignment,
         foldAngle: foldAngle,
         id: crypto.randomUUID(),
       });

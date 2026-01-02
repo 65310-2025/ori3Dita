@@ -1,4 +1,4 @@
-import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
+import React, { useLayoutEffect, useRef, useState } from "react";
 
 import { CP, Edge, Point } from "../../types/cp";
 import {
@@ -10,7 +10,7 @@ import {
   mvKeys,
   mvMap,
 } from "../../types/ui";
-import { useClickOutside } from "../hooks/clickOutside";
+import { getSnapPoints } from "../../utils/cpEdit";
 import { useDrawMode } from "../hooks/drawMode";
 import { useModeSwitcher } from "../hooks/modeSwitcher";
 import { ViewBox, useCanvasControls } from "../hooks/panZoom";
@@ -28,7 +28,7 @@ const renderCP = (
     edge: Edge,
   ) => (event: React.PointerEvent<SVGPathElement>) => void,
 ) => {
-  const vertices = cp.vertices.map((v: Point, idx: number) => {
+  const vertices = getSnapPoints(cp).map((v: Point, idx: number) => {
     return (
       <circle
         cx={v.x}
@@ -79,7 +79,6 @@ const CPCanvas: React.FC<CPCanvasProps> = ({ cp, setCP }) => {
   const [height, setHeight] = useState<number>(0);
   const {
     viewBox,
-    setViewBox,
     zoomOnWheel,
     zoomOnPointerDown,
     zoomOnPointerMove,
