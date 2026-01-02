@@ -25,6 +25,7 @@
   padding: 40px;
   width: calc(100vw - var(--sidebar-width));
   overflow: scroll;
+  overflow-x: hidden;
 }
 
 .Docs-content a {

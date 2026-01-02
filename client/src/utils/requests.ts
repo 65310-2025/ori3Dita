@@ -18,7 +18,7 @@ function convertToJSON(res: Response): Promise<any> {
   return res
     .clone()
     .json()
-    .catch((error) => {
+    .catch(() => {
       // throw an error containing the text that couldn't be converted to JSON
       return res.text().then((text) => {
         throw `API request's result could not be converted to a JSON object: \n${text}`;

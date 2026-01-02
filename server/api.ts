@@ -118,7 +118,7 @@ router.post("/designs", async (req: Request, res: Response) => {
           newCP.edges_foldAngle[i] = (newCP.edges_foldAngle[i] * Math.PI) / 180;
         }
       }
-    } catch (error) {
+    } catch {
       newCP = new CP({
         vertices_coords: [
           [0, 0],

@@ -1,5 +1,5 @@
 import dotenv from "dotenv";
-import express, { NextFunction, Request, Response } from "express";
+import express, { Request, Response } from "express";
 import session from "express-session";
 import http from "http";
 import mongoose from "mongoose";
@@ -71,7 +71,7 @@ app.get("*", (req: Request, res: Response) => {
   });
 });
 
-app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+app.use((err: any, req: Request, res: Response) => {
   const status = err.status || 500;
   if (status === 500) {
     console.log("The server errored when processing a request!");

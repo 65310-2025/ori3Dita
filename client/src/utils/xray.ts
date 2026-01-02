@@ -1,7 +1,6 @@
 import { CP, Edge, Point } from "../types/cp";
 import { Face, FoldedFace, Point3D } from "../types/xray";
 import { pointToKey, pointsEqual } from "./cp";
-import { intersectSegments } from "./geometry";
 
 const DISTORTION = 0.001; // how much to distort the face when folding
 

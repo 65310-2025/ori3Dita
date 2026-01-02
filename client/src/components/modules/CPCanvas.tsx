@@ -27,8 +27,10 @@ const renderCP = (
   edgeOnClick: (
     edge: Edge,
   ) => (event: React.PointerEvent<SVGPathElement>) => void,
+  mode: Mode,
 ) => {
-  const vertices = getSnapPoints(cp).map((v: Point, idx: number) => {
+  const vertices = mode === Mode.Drawing ? getSnapPoints(cp) : cp.vertices;
+  const verticesComponents = vertices.map((v: Point, idx: number) => {
     return (
       <circle
         cx={v.x}
@@ -64,7 +66,7 @@ const renderCP = (
     );
   });
 
-  return [...edges, ...vertices];
+  return [...edges, ...verticesComponents];
 };
 
 export interface CPCanvasProps {
@@ -201,7 +203,9 @@ const CPCanvas: React.FC<CPCanvasProps> = ({ cp, setCP }) => {
         onWheel={onWheel}
       >
         <g className="CP">
-          {cp !== null ? renderCP(cp, viewBox, selection, edgeOnClick) : null}
+          {cp !== null
+            ? renderCP(cp, viewBox, selection, edgeOnClick, mode)
+            : null}
         </g>
         <g className="Pen">
           <path ref={pathRef} className={`Edge Edge-${mvMode} Pen-path`} />

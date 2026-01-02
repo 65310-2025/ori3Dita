@@ -38,11 +38,11 @@ const Docs: React.FC = () => {
               <br />
               <br />
               Ori3Dita was built by Brandon Wong, David Lee, Kenny Zhang, and
-              Abby Chou as their final project for Professor Erik Demaine's
-              6.5310 "Geometric folding algorithms" class at MIT. The project is
-              currently in its "minimum working prototype" phase, but is
-              intended to be further developed into a fully functional crease
-              pattern editor for public use.
+              Abby Chou as their final project for Professor Erik Demaine&apos;s
+              6.5310 &quot;Geometric folding algorithms&quot; class at MIT. The
+              project is currently in its &quot;minimum working prototype&quot;
+              phase, but is intended to be further developed into a fully
+              functional crease pattern editor for public use.
               <br />
               <br />
               To report a bug, request a feature, or make a pull request, all
@@ -132,7 +132,7 @@ const Docs: React.FC = () => {
                     <td>Q</td>
                     <td>Select</td>
                   </tr>
-                  <tr>
+                  {/*<tr>
                     <td>E</td>
                     <td>Change MV</td>
                   </tr>
@@ -143,13 +143,13 @@ const Docs: React.FC = () => {
                   <tr>
                     <td>G</td>
                     <td>Edit crease (change fold angle)</td>
-                  </tr>
+                  </tr>*/}
                   <tr>
                     <td>Scroll</td>
                     <td>Zoom in/out</td>
                   </tr>
                   <tr>
-                    <td>Alt + Drag (Option + Drag on Mac)</td>
+                    <td>Middle mouse drag</td>
                     <td>Pan</td>
                   </tr>
                 </tbody>
@@ -163,18 +163,6 @@ const Docs: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  <tr>
-                    <td>B</td>
-                    <td>Refresh X-ray</td>
-                  </tr>
-                  <tr>
-                    <td>-</td>
-                    <td>Render X-ray with previous starting face</td>
-                  </tr>
-                  <tr>
-                    <td>=</td>
-                    <td>Render X-ray with next starting face</td>
-                  </tr>
                   <tr>
                     <td>Left Click</td>
                     <td>Rotate model</td>
