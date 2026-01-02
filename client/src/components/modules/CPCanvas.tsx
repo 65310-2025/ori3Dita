@@ -106,7 +106,8 @@ const CPCanvas: React.FC<CPCanvasProps> = ({ cp, setCP }) => {
     onPointerDown: drawOnPointerDown,
     onPointerMove: drawOnPointerMove,
     onPointerUp: drawOnPointerUp,
-  } = useDrawMode(cp, setCP, mvMode);
+    onKeyDown: drawOnKeyDown,
+  } = useDrawMode(cp, setCP, mvMode, mode);
 
   useLayoutEffect(() => {
     if (!editorRef.current) return;
@@ -152,6 +153,7 @@ const CPCanvas: React.FC<CPCanvasProps> = ({ cp, setCP }) => {
     modeOnKeyDown(e);
     if (mode === Mode.Drawing) {
       mvModeOnKeyDown(e);
+      drawOnKeyDown(e);
     }
   };
 

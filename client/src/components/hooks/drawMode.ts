@@ -1,17 +1,26 @@
-import React, { useRef } from "react";
+import React, { useEffect, useRef } from "react";
 
 import { CP, Point } from "../../types/cp";
-import { MvMode } from "../../types/ui";
+import { Mode, MvMode } from "../../types/ui";
 import { addEdge, getSnapPoints, snapVertex } from "../../utils/cpEdit";
 
 export const useDrawMode = (
   cp: CP | null,
   setCP: (cp: CP) => void,
   mvMode: MvMode,
+  mode: Mode,
 ) => {
   const pathRef = useRef<SVGPathElement | null>(null);
   const penStart = useRef<Point | null>(null);
   const penEnd = useRef<Point | null>(null);
+
+  useEffect(() => {
+    if (mode !== Mode.Drawing) {
+      pathRef.current?.setAttribute("d", "");
+      penStart.current = null;
+      penEnd.current = null;
+    }
+  }, [mode]);
 
   const getPoint = (
     e: React.PointerEvent<SVGSVGElement>,
@@ -60,5 +69,13 @@ export const useDrawMode = (
     penEnd.current = null;
   };
 
-  return { pathRef, onPointerDown, onPointerMove, onPointerUp };
+  const onKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Escape") {
+      pathRef.current?.setAttribute("d", "");
+      penStart.current = null;
+      penEnd.current = null;
+    }
+  };
+
+  return { pathRef, onPointerDown, onPointerMove, onPointerUp, onKeyDown };
 };

@@ -212,15 +212,11 @@ export const foldFaces = (faces: Face[], cp: CP): FoldedFace[] => {
     let curFace = f;
     let points = f.border.map((p: Point) => [p.x, p.y, 0] as Point3D);
     let par;
-    console.log("Face", f);
     while ((par = faceParent.get(curFace))) {
-      console.log("Folding over", par.edge);
       const flip = shouldFlip(curFace, par.edge) ? -1 : 1;
       points = rotateFace(points, par.edge, flip);
       curFace = par.face;
-      console.log("Result:", points);
     }
-    console.log("folded into", points);
     return { border: points, id: f.id };
   });
 };

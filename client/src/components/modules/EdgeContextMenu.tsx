@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 
-import { CP, Edge } from "../../types/cp";
+import { CP, Edge, EdgeAssignment } from "../../types/cp";
 import { useClickOutside } from "../hooks/clickOutside";
 import "./EdgeContextMenu.css";
 
@@ -36,6 +36,22 @@ const EdgeContextMenu: React.FC<EdgeContextMenuProps> = ({
     return Math.abs(angle) <= Math.PI;
   };
 
+  const getNewAssignment = (e: Edge, angle: number) => {
+    if (
+      e.assignment !== EdgeAssignment.Mountain &&
+      e.assignment !== EdgeAssignment.Valley
+    ) {
+      return e.assignment;
+    }
+    if (angle > 0) {
+      return EdgeAssignment.Valley;
+    }
+    if (angle < 0) {
+      return EdgeAssignment.Mountain;
+    }
+    return e.assignment;
+  };
+
   const submit = (event: React.FormEvent) => {
     event.preventDefault();
     if (cp === null) {
@@ -48,7 +64,13 @@ const EdgeContextMenu: React.FC<EdgeContextMenuProps> = ({
     const newCP = {
       ...cp,
       edges: cp.edges.map((e: Edge) =>
-        e.id === edgeID ? { ...e, foldAngle: newAngle } : e,
+        e.id === edgeID
+          ? {
+              ...e,
+              foldAngle: newAngle,
+              assignment: getNewAssignment(e, newAngle),
+            }
+          : e,
       ),
     };
     setCP(newCP);

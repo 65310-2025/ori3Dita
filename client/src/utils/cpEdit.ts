@@ -48,9 +48,9 @@ export const addEdge = (
 
   const foldAngle =
     mvMode === MvMode.Mountain
-      ? Math.PI
+      ? -Math.PI
       : mvMode === MvMode.Valley
-        ? -Math.PI
+        ? Math.PI
         : 0;
 
   const orderEdge = (p1: Point, p2: Point) => {
@@ -170,6 +170,8 @@ export const addEdge = (
         } else if (orderOld.lx > orderNew.lx) {
           breakPoints.push(orderOld.lp);
         }
+      } else {
+        newEdges.push(edge);
       }
     } else if (
       c1 === 0 &&
