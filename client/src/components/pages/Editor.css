@@ -1,0 +1,47 @@
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.Editor {
+  display: flex;
+  width: 100%;
+  height: calc(100vh - var(--header-height));
+  overflow: hidden;
+}
+
+.Editor-sidebar {
+  width: 40vw;
+  height: calc(100vh - var(--header-height));
+  display: flex;
+  flex-direction: column;
+  background: var(--background);
+}
+
+.Viewer-container {
+  flex: 1 1 auto;
+  width: 100%;
+  display: flex;
+  height: calc(100vh - var(--header-height) - 80px);
+}
+
+.viewer-buttons {
+  height: 80px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  flex: 0 0 auto;
+}
+button {
+  background-color: var(--primary-light);
+  color: var(--text-color);
+  border: none;
+  padding: 10px;
+  font-size: 1.2rem;
+  cursor: pointer;
+}

@@ -1,5 +1,5 @@
 import dotenv from "dotenv";
-import express, { NextFunction, Request, Response } from "express";
+import express, { Request, Response } from "express";
 import session from "express-session";
 import http from "http";
 import mongoose from "mongoose";
@@ -29,6 +29,12 @@ mongoose
 
 const app = express();
 app.use(checkRoutes);
+
+// Set up request logging
+app.use((req, res, next) => {
+  console.log(`${req.method} ${req.url}`);
+  next();
+});
 
 // allow us to process POST requests
 app.use(express.json());
@@ -65,7 +71,7 @@ app.get("*", (req: Request, res: Response) => {
   });
 });
 
-app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+app.use((err: any, req: Request, res: Response) => {
   const status = err.status || 500;
   if (status === 500) {
     console.log("The server errored when processing a request!");
@@ -79,8 +85,8 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
   });
 });
 
-// hardcode port to 3000 for now
-const port = 3000;
+// Use port 3000 for dev, 5173 for prod
+const port = process.argv[2] || process.env.PORT || 3000;
 const server = http.createServer(app);
 socketManager.init(server);
 

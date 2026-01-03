@@ -1,7 +1,7 @@
 import { Server } from "http";
 import { Socket as SocketIO, Server as SocketIOServer } from "socket.io";
 
-import { ISocket, IUser } from "./types/types";
+import { IUser } from "./types/types";
 
 let io: SocketIOServer;
 
@@ -40,7 +40,7 @@ export default {
 
     io.on("connection", (socket: SocketIO) => {
       console.log(`socket has connected ${socket.id}`);
-      socket.on("disconnect", (reason: string) => {
+      socket.on("disconnect", () => {
         const user = getUserFromSocketID(socket.id);
         removeUser(user, socket);
       });
@@ -50,6 +50,7 @@ export default {
   addUser: addUser,
   removeUser: removeUser,
 
+  getAllConnectedUsers: getAllConnectedUsers,
   getSocketFromUserID: getSocketFromUserID,
   getUserFromSocketID: getUserFromSocketID,
   getSocketFromSocketID: getSocketFromSocketID,

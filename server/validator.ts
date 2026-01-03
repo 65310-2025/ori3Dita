@@ -17,7 +17,7 @@ let routeChecked = false;
 
 // poke port 5173 to see if 'npm run dev' was possibly called
 function checkHotLoader(): Promise<boolean> {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     const server = net.createServer();
 
     server.once("error", (err: NodeJS.ErrnoException) => {
