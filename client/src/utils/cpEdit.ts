@@ -2,7 +2,7 @@ import { CP, Edge, EdgeAssignment, Point } from "../types/cp";
 import { MvMode } from "../types/ui";
 import { cross, getIntersection } from "./geometry";
 
-const SNAP_TOLERANCE = 0.015;
+const SNAP_TOLERANCE = 0.03;
 
 export const getSnapPoints = (cp: CP) => {
   return [

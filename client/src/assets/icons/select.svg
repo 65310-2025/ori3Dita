@@ -1,11 +1,12 @@
-<?xml version="1.0" encoding="utf-8"?>
-
+<?xml version="1.0" encoding="UTF-8"?>
 <!-- Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools -->
-<svg fill="#000000" height="800px" width="800px" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" 
-	 viewBox="-6 -6 30 30" xml:space="preserve">
-<g id="select">
-	<path d="M14.8,24l-3.3-4.3l-3.2,4.2L5.8,6.9l16,7.2L16.4,16l3.2,4.3L14.8,24z M11.6,16.4l3.6,4.8l1.6-1.3L13.1,15l3.3-1.1l-8.1-3.6
-		l1.3,8.7L11.6,16.4z"/>
-	<path d="M4,18H0v-4h2v2h2V18z M2,12H0V6h2V12z M18,10h-2V6h2V10z M18,4h-2V2h-2V0h4V4z M2,4H0V0h4v2H2V4z M12,2H6V0h6V2z"/>
-</g>
+<svg width="800px" height="800px" viewBox="0 0 512 512" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>mouse-select-filled</title>
+    <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="add" fill="#000000" transform="translate(62.226343, 62.126933)">
+            <polygon id="Fill-6" points="7.10542736e-15 7.10542736e-15 364.440324 103.2064 276.37835 189.916864 369.025732 282.559083 282.478894 369.108395 189.860868 276.466176 103.10699 364.539733">
+
+</polygon>
+        </g>
+    </g>
 </svg>
