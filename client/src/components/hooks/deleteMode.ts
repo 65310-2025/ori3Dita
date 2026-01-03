@@ -1,27 +1,27 @@
 import React, { useEffect, useRef } from "react";
 
 import { CP, Point } from "../../types/cp";
-import { Mode, MvMode } from "../../types/ui";
-import { addEdge, snapVertex } from "../../utils/cpEdit";
+import { Mode } from "../../types/ui";
+import { deleteBox } from "../../utils/cpEdit";
 
-export const useDrawMode = (
+export const useDeleteMode = (
   cp: CP | null,
   setCP: (cp: CP) => void,
-  mvMode: MvMode,
   mode: Mode,
 ) => {
-  const pathRef = useRef<SVGPathElement | null>(null);
+  const boxRef = useRef<SVGRectElement | null>(null);
   const penStart = useRef<Point | null>(null);
   const penEnd = useRef<Point | null>(null);
 
   const cleanup = () => {
-    pathRef.current?.setAttribute("d", "");
     penStart.current = null;
     penEnd.current = null;
+    boxRef.current?.setAttribute("width", "0");
+    boxRef.current?.setAttribute("height", "0");
   };
 
   useEffect(() => {
-    if (mode !== Mode.Drawing) {
+    if (mode !== Mode.Deleting) {
       cleanup();
     }
   }, [mode]);
@@ -41,8 +41,7 @@ export const useDrawMode = (
       return;
     }
     const svg = e.currentTarget;
-    const { x, y } = getPoint(e, svg);
-    penStart.current = snapVertex(cp, x, y) || { x: x, y: y };
+    penStart.current = getPoint(e, svg);
     e.currentTarget.setPointerCapture(e.pointerId);
   };
 
@@ -51,12 +50,11 @@ export const useDrawMode = (
     if (!curState || !cp) return;
 
     const svg = e.currentTarget;
-    const { x, y } = getPoint(e, svg);
-    const point = snapVertex(cp, x, y) || { x: x, y: y };
-    pathRef.current?.setAttribute(
-      "d",
-      `M${curState.x} ${curState.y} L ${point.x} ${point.y}`,
-    );
+    const point = getPoint(e, svg);
+    boxRef.current?.setAttribute("width", `${Math.abs(curState.x - point.x)}`);
+    boxRef.current?.setAttribute("height", `${Math.abs(curState.y - point.y)}`);
+    boxRef.current?.setAttribute("x", `${Math.min(curState.x, point.x)}`);
+    boxRef.current?.setAttribute("y", `${Math.min(curState.y, point.y)}`);
     penEnd.current = point;
   };
 
@@ -64,11 +62,11 @@ export const useDrawMode = (
     const start = penStart.current;
     const end = penEnd.current;
     e.currentTarget.releasePointerCapture(e.pointerId);
-    cleanup();
     if (start === null || end === null || cp === null) {
       return;
     }
-    setCP(addEdge(cp, start, end, mvMode));
+    setCP(deleteBox(cp, start, end));
+    cleanup();
   };
 
   const onKeyDown = (e: React.KeyboardEvent) => {
@@ -77,5 +75,5 @@ export const useDrawMode = (
     }
   };
 
-  return { pathRef, onPointerDown, onPointerMove, onPointerUp, onKeyDown };
+  return { boxRef, onPointerDown, onPointerMove, onPointerUp, onKeyDown };
 };

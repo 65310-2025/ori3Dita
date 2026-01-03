@@ -99,3 +99,10 @@
 .Editor-canvas-toolbar-icon-inactive:hover {
   opacity: 0.8;
 }
+
+.Delete-box {
+  fill: rgba(235, 100, 100, 0.3);
+  vector-effect: non-scaling-stroke;
+  stroke-width: 2;
+  stroke: rgba(225, 0, 0, 0.6);
+}

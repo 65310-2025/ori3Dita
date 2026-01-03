@@ -1,15 +1,11 @@
 import { CP, Edge, Point } from "../types/cp";
 import { Face, FoldedFace, Point3D } from "../types/xray";
-import { pointToKey, pointsEqual } from "./cp";
+import { getOtherVertex, pointToKey, pointsEqual } from "./cp";
 
 const DISTORTION = 0.001; // how much to distort the face when folding
 
 const getDirectedEdgeKey = (v1: Point, v2: Point) => {
   return `Edge${pointToKey(v1)}-${pointToKey(v2)}`;
-};
-
-const getOtherVertex = (e: Edge, v: Point) => {
-  return pointsEqual(e.vertex1, v) ? e.vertex2 : e.vertex1;
 };
 
 const getEdgeAngle = (e: Edge, reference: Point): number => {

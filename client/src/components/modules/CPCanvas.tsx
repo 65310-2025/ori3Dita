@@ -11,6 +11,7 @@ import {
   mvMap,
 } from "../../types/ui";
 import { getSnapPoints } from "../../utils/cpEdit";
+import { useDeleteMode } from "../hooks/deleteMode";
 import { useDrawMode } from "../hooks/drawMode";
 import { useModeSwitcher } from "../hooks/modeSwitcher";
 import { ViewBox, useCanvasControls } from "../hooks/panZoom";
@@ -108,6 +109,13 @@ const CPCanvas: React.FC<CPCanvasProps> = ({ cp, setCP }) => {
     onPointerUp: drawOnPointerUp,
     onKeyDown: drawOnKeyDown,
   } = useDrawMode(cp, setCP, mvMode, mode);
+  const {
+    boxRef,
+    onPointerDown: deleteOnPointerDown,
+    onPointerMove: deleteOnPointerMove,
+    onPointerUp: deleteOnPointerUp,
+    onKeyDown: deleteOnKeyDown,
+  } = useDeleteMode(cp, setCP, mode);
 
   useLayoutEffect(() => {
     if (!editorRef.current) return;
@@ -128,6 +136,8 @@ const CPCanvas: React.FC<CPCanvasProps> = ({ cp, setCP }) => {
     zoomOnPointerDown(e);
     if (mode === Mode.Drawing) {
       drawOnPointerDown(e);
+    } else if (mode === Mode.Deleting) {
+      deleteOnPointerDown(e);
     }
   };
 
@@ -135,6 +145,8 @@ const CPCanvas: React.FC<CPCanvasProps> = ({ cp, setCP }) => {
     zoomOnPointerMove(e);
     if (mode === Mode.Drawing) {
       drawOnPointerMove(e);
+    } else if (mode === Mode.Deleting) {
+      deleteOnPointerMove(e);
     }
   };
 
@@ -142,6 +154,8 @@ const CPCanvas: React.FC<CPCanvasProps> = ({ cp, setCP }) => {
     zoomOnPointerUp();
     if (mode === Mode.Drawing) {
       drawOnPointerUp(e);
+    } else if (mode === Mode.Deleting) {
+      deleteOnPointerUp(e);
     }
   };
 
@@ -154,6 +168,8 @@ const CPCanvas: React.FC<CPCanvasProps> = ({ cp, setCP }) => {
     if (mode === Mode.Drawing) {
       mvModeOnKeyDown(e);
       drawOnKeyDown(e);
+    } else if (mode === Mode.Deleting) {
+      deleteOnKeyDown(e);
     }
   };
 
@@ -211,6 +227,9 @@ const CPCanvas: React.FC<CPCanvasProps> = ({ cp, setCP }) => {
         </g>
         <g className="Pen">
           <path ref={pathRef} className={`Edge Edge-${mvMode} Pen-path`} />
+        </g>
+        <g>
+          <rect ref={boxRef} className="Delete-box" />
         </g>
       </svg>
       <div className="Editor-canvas-toolbar" id="Mode-toolbar">
