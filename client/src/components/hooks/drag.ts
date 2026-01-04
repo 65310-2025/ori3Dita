@@ -1,30 +1,21 @@
-import React, { useEffect, useRef } from "react";
+import React, { useRef } from "react";
 
-import { CP, Point } from "../../types/cp";
-import { Mode } from "../../types/ui";
-import { deleteBox } from "../../utils/cpEdit";
+import { Point } from "../../types/cp";
 
-export const useDeleteMode = (
-  cp: CP | null,
-  setCP: (cp: CP) => void,
-  mode: Mode,
+export const useDrag = (
+  onMove: (start: Point, end: Point) => void,
+  submit: (start: Point, end: Point) => void,
+  reset: () => void,
+  button: number = 0,
 ) => {
-  const boxRef = useRef<SVGRectElement | null>(null);
   const penStart = useRef<Point | null>(null);
   const penEnd = useRef<Point | null>(null);
 
   const cleanup = () => {
     penStart.current = null;
     penEnd.current = null;
-    boxRef.current?.setAttribute("width", "0");
-    boxRef.current?.setAttribute("height", "0");
+    reset();
   };
-
-  useEffect(() => {
-    if (mode !== Mode.Deleting) {
-      cleanup();
-    }
-  }, [mode]);
 
   const getPoint = (
     e: React.PointerEvent<SVGSVGElement>,
@@ -37,9 +28,7 @@ export const useDeleteMode = (
   };
 
   const onPointerDown = (e: React.PointerEvent<SVGSVGElement>) => {
-    if (e.button !== 0 || cp === null) {
-      return;
-    }
+    if (e.button !== button) return;
     const svg = e.currentTarget;
     penStart.current = getPoint(e, svg);
     e.currentTarget.setPointerCapture(e.pointerId);
@@ -47,14 +36,10 @@ export const useDeleteMode = (
 
   const onPointerMove = (e: React.PointerEvent<SVGSVGElement>) => {
     const curState = penStart.current;
-    if (!curState || !cp) return;
-
+    if (!curState) return;
     const svg = e.currentTarget;
     const point = getPoint(e, svg);
-    boxRef.current?.setAttribute("width", `${Math.abs(curState.x - point.x)}`);
-    boxRef.current?.setAttribute("height", `${Math.abs(curState.y - point.y)}`);
-    boxRef.current?.setAttribute("x", `${Math.min(curState.x, point.x)}`);
-    boxRef.current?.setAttribute("y", `${Math.min(curState.y, point.y)}`);
+    onMove(curState, point);
     penEnd.current = point;
   };
 
@@ -62,11 +47,9 @@ export const useDeleteMode = (
     const start = penStart.current;
     const end = penEnd.current;
     e.currentTarget.releasePointerCapture(e.pointerId);
-    if (start === null || end === null || cp === null) {
-      return;
-    }
-    setCP(deleteBox(cp, start, end));
     cleanup();
+    if (start === null || end === null) return;
+    submit(start, end);
   };
 
   const onKeyDown = (e: React.KeyboardEvent) => {
@@ -75,5 +58,5 @@ export const useDeleteMode = (
     }
   };
 
-  return { boxRef, onPointerDown, onPointerMove, onPointerUp, onKeyDown };
+  return { cleanup, onPointerDown, onPointerMove, onPointerUp, onKeyDown };
 };

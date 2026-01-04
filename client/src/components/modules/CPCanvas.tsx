@@ -11,6 +11,7 @@ import {
   mvMap,
 } from "../../types/ui";
 import { getSnapPoints } from "../../utils/cpEdit";
+import { useChangeMvMode } from "../hooks/changeMvMode";
 import { useDeleteMode } from "../hooks/deleteMode";
 import { useDrawMode } from "../hooks/drawMode";
 import { useModeSwitcher } from "../hooks/modeSwitcher";
@@ -103,19 +104,27 @@ const CPCanvas: React.FC<CPCanvasProps> = ({ cp, setCP }) => {
     edgeOnClick: selectEdgeOnClick,
   } = useSelectMode(mode);
   const {
-    pathRef,
+    ui: drawUi,
     onPointerDown: drawOnPointerDown,
     onPointerMove: drawOnPointerMove,
     onPointerUp: drawOnPointerUp,
     onKeyDown: drawOnKeyDown,
   } = useDrawMode(cp, setCP, mvMode, mode);
   const {
-    boxRef,
+    ui: deleteUi,
     onPointerDown: deleteOnPointerDown,
     onPointerMove: deleteOnPointerMove,
     onPointerUp: deleteOnPointerUp,
     onKeyDown: deleteOnKeyDown,
   } = useDeleteMode(cp, setCP, mode);
+  const {
+    ui: changeMvUi,
+    onPointerDown: changeMvOnPointerDown,
+    onPointerMove: changeMvOnPointerMove,
+    onPointerUp: changeMvOnPointerUp,
+    onKeyDown: changeMvOnKeyDown,
+    edgeOnClick: changeMvEdgeOnClick,
+  } = useChangeMvMode(cp, setCP, mode);
 
   useLayoutEffect(() => {
     if (!editorRef.current) return;
@@ -138,6 +147,8 @@ const CPCanvas: React.FC<CPCanvasProps> = ({ cp, setCP }) => {
       drawOnPointerDown(e);
     } else if (mode === Mode.Deleting) {
       deleteOnPointerDown(e);
+    } else if (mode === Mode.ChangeMV) {
+      changeMvOnPointerDown(e);
     }
   };
 
@@ -147,6 +158,8 @@ const CPCanvas: React.FC<CPCanvasProps> = ({ cp, setCP }) => {
       drawOnPointerMove(e);
     } else if (mode === Mode.Deleting) {
       deleteOnPointerMove(e);
+    } else if (mode === Mode.ChangeMV) {
+      changeMvOnPointerMove(e);
     }
   };
 
@@ -156,6 +169,8 @@ const CPCanvas: React.FC<CPCanvasProps> = ({ cp, setCP }) => {
       drawOnPointerUp(e);
     } else if (mode === Mode.Deleting) {
       deleteOnPointerUp(e);
+    } else if (mode === Mode.ChangeMV) {
+      changeMvOnPointerUp(e);
     }
   };
 
@@ -170,6 +185,8 @@ const CPCanvas: React.FC<CPCanvasProps> = ({ cp, setCP }) => {
       drawOnKeyDown(e);
     } else if (mode === Mode.Deleting) {
       deleteOnKeyDown(e);
+    } else if (mode === Mode.ChangeMV) {
+      changeMvOnKeyDown(e);
     }
   };
 
@@ -200,6 +217,8 @@ const CPCanvas: React.FC<CPCanvasProps> = ({ cp, setCP }) => {
     return (event: React.PointerEvent<SVGPathElement>) => {
       if (mode === Mode.Selecting) {
         selectEdgeOnClick(event, e);
+      } else if (mode === Mode.ChangeMV) {
+        changeMvEdgeOnClick(event, e);
       }
     };
   };
@@ -225,12 +244,9 @@ const CPCanvas: React.FC<CPCanvasProps> = ({ cp, setCP }) => {
             ? renderCP(cp, viewBox, selection, edgeOnClick, mode)
             : null}
         </g>
-        <g className="Pen">
-          <path ref={pathRef} className={`Edge Edge-${mvMode} Pen-path`} />
-        </g>
-        <g>
-          <rect ref={boxRef} className="Delete-box" />
-        </g>
+        {drawUi}
+        {deleteUi}
+        {changeMvUi}
       </svg>
       <div className="Editor-canvas-toolbar" id="Mode-toolbar">
         {icons}

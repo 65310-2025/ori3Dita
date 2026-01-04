@@ -48,3 +48,13 @@ export const getOtherVertex = (e: Edge, v: Point) => {
 export const isEndpoint = (e: { vertex1: Point; vertex2: Point }, p: Point) => {
   return pointsEqual(e.vertex1, p) || pointsEqual(e.vertex2, p);
 };
+
+export const flipAssignment = (assignment: EdgeAssignment) => {
+  if (assignment === EdgeAssignment.Mountain) {
+    return EdgeAssignment.Valley;
+  }
+  if (assignment === EdgeAssignment.Valley) {
+    return EdgeAssignment.Mountain;
+  }
+  return assignment;
+};

@@ -13,9 +13,7 @@ export const useSelectMode = (mode: Mode) => {
   }, [mode]);
 
   const edgeOnClick = (event: React.PointerEvent<SVGPathElement>, e: Edge) => {
-    if (event.button !== 0) {
-      return;
-    }
+    if (event.button !== 0) return;
     event.stopPropagation();
     if (selection.includes(e.id)) {
       setSelection([]);

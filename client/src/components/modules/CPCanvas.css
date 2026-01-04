@@ -106,3 +106,11 @@
   stroke-width: 2;
   stroke: rgba(225, 0, 0, 0.6);
 }
+
+.ChangeMv-box {
+  fill: var(--text-color-secondary);
+  fill-opacity: 0.3;
+  vector-effect: non-scaling-stroke;
+  stroke-width: 2;
+  stroke: var(--text-color);
+}

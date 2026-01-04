@@ -17,16 +17,16 @@ export const getSnapPoints = (cp: CP) => {
   ];
 };
 
-export const snapVertex = (cp: CP, x: number, y: number) => {
+export const snapVertex = (cp: CP, point: Point) => {
   const snapPoints = getSnapPoints(cp);
 
-  const distance = (point: Point) => {
+  const distance = (p: Point) => {
     return Math.sqrt(
-      (point.x - x) * (point.x - x) + (point.y - y) * (point.y - y),
+      (p.x - point.x) * (p.x - point.x) + (p.y - point.y) * (p.y - point.y),
     );
   };
 
-  return snapPoints.find((point: Point) => distance(point) <= SNAP_TOLERANCE);
+  return snapPoints.find((p: Point) => distance(p) <= SNAP_TOLERANCE);
 };
 
 export const addEdge = (
@@ -147,32 +147,39 @@ export const deleteEdge = (cp: CP, edgeId: string): CP => {
   };
 };
 
-export const deleteBox = (cp: CP, corner1: Point, corner2: Point): CP => {
-  const minX = Math.min(corner1.x, corner2.x),
-    maxX = Math.max(corner1.x, corner2.x);
-  const minY = Math.min(corner1.y, corner2.y),
-    maxY = Math.max(corner1.y, corner2.y);
+export const edgeInBox = (edge: Edge, corner1: Point, corner2: Point) => {
+  const minX = Math.min(corner1.x, corner2.x);
+  const maxX = Math.max(corner1.x, corner2.x);
+  const minY = Math.min(corner1.y, corner2.y);
+  const maxY = Math.max(corner1.y, corner2.y);
 
   const inBox = (p: Point) => {
     return p.x >= minX && p.x <= maxX && p.y >= minY && p.y <= maxY;
   };
 
-  const newEdges = cp.edges.filter((e: Edge) => {
-    if (inBox(e.vertex1) || inBox(e.vertex2)) {
-      return false;
-    }
-    const box = [
-      { x: minX, y: minY },
-      { x: maxX, y: minY },
-      { x: maxX, y: maxY },
-      { x: minX, y: maxY },
-    ];
-    return !box.some((p: Point, ind: number) => {
-      return (
-        intersectSegments(p, box[(ind + 1) % 4], e.vertex1, e.vertex2) !== null
-      );
-    });
+  if (inBox(edge.vertex1) || inBox(edge.vertex2)) {
+    return true;
+  }
+
+  const box = [
+    { x: minX, y: minY },
+    { x: maxX, y: minY },
+    { x: maxX, y: maxY },
+    { x: minX, y: maxY },
+  ];
+
+  return box.some((p: Point, ind: number) => {
+    return (
+      intersectSegments(p, box[(ind + 1) % 4], edge.vertex1, edge.vertex2) !==
+      null
+    );
   });
+};
+
+export const deleteBox = (cp: CP, corner1: Point, corner2: Point): CP => {
+  const newEdges = cp.edges.filter(
+    (e: Edge) => !edgeInBox(e, corner1, corner2),
+  );
   const newVertices = [
     ...newEdges.map((e: Edge) => e.vertex1),
     ...newEdges.map((e: Edge) => e.vertex2),
