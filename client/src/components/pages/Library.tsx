@@ -75,6 +75,9 @@ const Library: React.FC = () => {
       // Refresh designs
       const designs: Array<DesignMetadataDto> = await get("/api/designs");
       setDesigns(designs);
+
+      const newDesignMetadata: DesignMetadataDto = designs[designs.length - 1];
+      navigate(`/editor/${newDesignMetadata.cpID}`)    
     } catch (error) {
       console.error("Failed to create new design:", error);
     }
@@ -97,16 +100,18 @@ const Library: React.FC = () => {
             <Form.Item
               name="name"
               label="Name"
-              rules={[{ required: true, message: "Please enter the name" }]}
+              // rules={[{ required: true, message: "Please enter the name" }]}
+              initialValue="Untitled"
             >
               <Input />
             </Form.Item>
             <Form.Item
               name="description"
               label="Description"
-              rules={[
-                { required: true, message: "Please enter the description" },
-              ]}
+              // rules={[
+              //   { required: true, message: "Please enter the description" },
+              // ]}
+              initialValue="New crease pattern"
             >
               <Input.TextArea />
             </Form.Item>
