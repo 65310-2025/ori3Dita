@@ -206,9 +206,7 @@ const CPCanvas: React.FC<CPCanvasProps> = ({ cp, setCP }) => {
       <button key={m} onClick={() => setMvMode(m)}>
         <div
           className={`Editor-canvas-toolbar-icon-${m === mvMode ? "active" : "inactive"} Editor-canvas-mvIcon`}
-          style={{
-            color: m === "M" ? "red" : m === "V" ? "blue" : m === "B" ? "black" : m === "A" ? "green" : undefined
-          }}
+          id={`MvIcon-${m}`}
         >
           {m}
         </div>
@@ -257,14 +255,12 @@ const CPCanvas: React.FC<CPCanvasProps> = ({ cp, setCP }) => {
       <div className="Editor-canvas-toolbar" id="MvMode-toolbar">
         {mode === Mode.Drawing ? mvIcons : null}
       </div>
-      {selection.length > 0 ? (
-        <EdgeContextMenu
-          edgeID={selection[0]}
-          cp={cp}
-          setCP={setCP}
-          setSelection={setSelection}
-        />
-      ) : null}
+      <EdgeContextMenu
+        selection={selection}
+        cp={cp}
+        setCP={setCP}
+        setSelection={setSelection}
+      />
     </div>
   );
 };

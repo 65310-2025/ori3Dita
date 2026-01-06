@@ -114,3 +114,19 @@
   stroke-width: 2;
   stroke: var(--text-color);
 }
+
+#MvIcon-B {
+  color: var(--border-edge-color);
+}
+
+#MvIcon-A {
+  color: var(--aux-edge-color);
+}
+
+#MvIcon-M {
+  color: var(--mountain-edge-color);
+}
+
+#MvIcon-V {
+  color: var(--valley-edge-color);
+}
