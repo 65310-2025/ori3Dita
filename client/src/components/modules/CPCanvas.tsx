@@ -206,6 +206,9 @@ const CPCanvas: React.FC<CPCanvasProps> = ({ cp, setCP }) => {
       <button key={m} onClick={() => setMvMode(m)}>
         <div
           className={`Editor-canvas-toolbar-icon-${m === mvMode ? "active" : "inactive"} Editor-canvas-mvIcon`}
+          style={{
+            color: m === "M" ? "red" : m === "V" ? "blue" : m === "B" ? "black" : m === "A" ? "green" : undefined
+          }}
         >
           {m}
         </div>

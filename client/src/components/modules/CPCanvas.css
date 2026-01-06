@@ -71,8 +71,8 @@
 }
 
 .Editor-canvas-modeIcon {
-  width: 32px;
-  margin: 10px;
+  width: 50px;
+  margin: 5px;
   filter: invert(var(--darkmode-invert));
 }
 
@@ -80,8 +80,8 @@
   color: var(--text-color);
   border: 2px solid;
   border-radius: 5px;
-  width: 32px;
-  margin: 10px;
+  width: 50px;
+  margin: 5px;
 }
 
 .Editor-canvas-toolbar:hover {
