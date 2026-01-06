@@ -1,6 +1,7 @@
 import { CP, Edge, EdgeAssignment, Point } from "../types/cp";
 import { MvMode } from "../types/ui";
-import { cross, getIntersection } from "./geometry";
+import { isEndpoint, pointsEqual } from "./cp";
+import { intersectSegments, onSegment } from "./geometry";
 
 const SNAP_TOLERANCE = 0.03;
 
@@ -16,14 +17,16 @@ export const getSnapPoints = (cp: CP) => {
   ];
 };
 
-export const snapVertex = (snapPoints: Point[], x: number, y: number) => {
-  const distance = (point: Point) => {
+export const snapVertex = (cp: CP, point: Point) => {
+  const snapPoints = getSnapPoints(cp);
+
+  const distance = (p: Point) => {
     return Math.sqrt(
-      (point.x - x) * (point.x - x) + (point.y - y) * (point.y - y),
+      (p.x - point.x) * (p.x - point.x) + (p.y - point.y) * (p.y - point.y),
     );
   };
 
-  return snapPoints.find((point: Point) => distance(point) <= SNAP_TOLERANCE);
+  return snapPoints.find((p: Point) => distance(p) <= SNAP_TOLERANCE);
 };
 
 export const addEdge = (
@@ -31,20 +34,20 @@ export const addEdge = (
   vertex1: Point,
   vertex2: Point,
   mvMode: MvMode,
-) => {
-  if (vertex1.x === vertex2.x && vertex1.y === vertex2.y) {
+): CP => {
+  if (pointsEqual(vertex1, vertex2)) {
     return cp;
   }
   const newVertices = [...cp.vertices];
 
-  const addPoint = (point: Point) => {
-    if (!newVertices.some((p) => p.x === point.x && p.y === point.y)) {
-      newVertices.push(point);
+  const addPoint = (point: Point, arr: Point[]) => {
+    if (!arr.some((p) => pointsEqual(point, p))) {
+      arr.push(point);
     }
   };
 
-  addPoint(vertex1);
-  addPoint(vertex2);
+  addPoint(vertex1, newVertices);
+  addPoint(vertex2, newVertices);
 
   const foldAngle =
     mvMode === MvMode.Mountain
@@ -53,172 +56,59 @@ export const addEdge = (
         ? Math.PI
         : 0;
 
-  const orderEdge = (p1: Point, p2: Point) => {
-    const vertical = p1.x === p2.x;
-    if (vertical) {
-      if (p1.y < p2.y) {
-        return { lx: p1.y, rx: p2.y, lp: p1, rp: p2, vertical: vertical };
-      } else {
-        return { lx: p2.y, rx: p1.y, lp: p2, rp: p1, vertical: vertical };
-      }
-    }
-    if (p1.x < p2.x) {
-      return { lx: p1.x, rx: p2.x, lp: p1, rp: p2, vertical: vertical };
-    } else {
-      return { lx: p2.x, rx: p1.x, lp: p2, rp: p1, vertical: vertical };
-    }
-  };
-
-  const getParam = (p: Point, vertical: boolean) => {
-    return vertical ? p.y : p.x;
-  };
-
   const newEdges: Edge[] = [];
   const breakPoints = [vertex1, vertex2];
-  const orderNew = orderEdge(vertex1, vertex2);
   cp.edges.forEach((edge: Edge) => {
-    const c1 = cross(edge.vertex1, vertex1, edge.vertex2);
-    const c2 = cross(edge.vertex1, vertex2, edge.vertex2);
-    const c3 = cross(vertex1, edge.vertex1, vertex2);
-    const c4 = cross(vertex1, edge.vertex2, vertex2);
-    const orderOld = orderEdge(edge.vertex1, edge.vertex2);
+    const intersection = intersectSegments(
+      edge.vertex1,
+      edge.vertex2,
+      vertex1,
+      vertex2,
+    );
 
-    if (Math.sign(c1 * c2) === -1 && Math.sign(c3 * c4) === -1) {
-      const intersection = getIntersection(
-        vertex1,
-        vertex2,
-        edge.vertex1,
-        edge.vertex2,
-      );
-      newEdges.push({
-        ...edge,
-        vertex1: intersection,
-        id: crypto.randomUUID(),
+    if (intersection === null) {
+      newEdges.push(edge);
+    } else if (intersection === undefined) {
+      [edge.vertex1, edge.vertex2].forEach((p: Point) => {
+        if (onSegment(vertex1, vertex2, p)) {
+          if (!pointsEqual(p, vertex1) && !pointsEqual(p, vertex2)) {
+            addPoint(p, breakPoints);
+          }
+        } else if (onSegment(p, vertex1, vertex2)) {
+          newEdges.push({
+            ...edge,
+            vertex1: p,
+            vertex2: vertex2,
+            id: crypto.randomUUID(),
+          });
+        } else if (onSegment(p, vertex2, vertex1)) {
+          newEdges.push({
+            ...edge,
+            vertex1: p,
+            vertex2: vertex1,
+            id: crypto.randomUUID(),
+          });
+        }
       });
-      newEdges.push({
-        ...edge,
-        vertex2: intersection,
-        id: crypto.randomUUID(),
-      });
-      breakPoints.push(intersection);
-      addPoint(intersection);
-    } else if (c1 === 0 && c2 === 0) {
-      if (orderOld.lx < orderNew.lx && orderOld.rx > orderNew.lx) {
-        if (orderOld.rx < orderNew.rx) {
-          newEdges.push({
-            ...edge,
-            vertex1: orderOld.lp,
-            vertex2: orderNew.lp,
-            id: crypto.randomUUID(),
-          });
-          breakPoints.push(orderOld.rp);
-        } else if (orderOld.rx === orderNew.rx) {
-          newEdges.push({
-            ...edge,
-            vertex1: orderOld.lp,
-            vertex2: orderNew.lp,
-            id: crypto.randomUUID(),
-          });
-        } else {
-          newEdges.push({
-            ...edge,
-            vertex1: orderOld.lp,
-            vertex2: orderNew.lp,
-            id: crypto.randomUUID(),
-          });
-          newEdges.push({
-            ...edge,
-            vertex1: orderOld.rp,
-            vertex2: orderNew.rp,
-            id: crypto.randomUUID(),
-          });
-        }
-      } else if (orderOld.lx > orderNew.lx && orderOld.lx < orderNew.rx) {
-        if (orderOld.rx < orderNew.rx) {
-          breakPoints.push(orderOld.lp);
-          breakPoints.push(orderOld.rp);
-        } else if (orderOld.rx == orderNew.rx) {
-          breakPoints.push(orderOld.lp);
-        } else {
-          newEdges.push({
-            ...edge,
-            vertex1: orderNew.rp,
-            vertex2: orderOld.rp,
-            id: crypto.randomUUID(),
-          });
-          breakPoints.push(orderOld.lp);
-        }
-      } else if (orderOld.lx === orderNew.lx) {
-        if (orderOld.rx < orderNew.rx) {
-          breakPoints.push(orderOld.rp);
-        } else if (orderOld.rx > orderNew.rx) {
-          newEdges.push({
-            ...edge,
-            vertex1: orderNew.rp,
-            vertex2: orderOld.rp,
-            id: crypto.randomUUID(),
-          });
-        }
-      } else if (orderOld.rx === orderNew.rx) {
-        if (orderOld.lx < orderNew.lx) {
-          newEdges.push({
-            ...edge,
-            vertex1: orderOld.lp,
-            vertex2: orderNew.lp,
-            id: crypto.randomUUID(),
-          });
-        } else if (orderOld.lx > orderNew.lx) {
-          breakPoints.push(orderOld.lp);
-        }
+    } else {
+      addPoint(intersection, newVertices);
+      if (!isEndpoint(edge, intersection)) {
+        newEdges.push({
+          ...edge,
+          vertex2: intersection,
+          id: crypto.randomUUID(),
+        });
+        newEdges.push({
+          ...edge,
+          vertex1: intersection,
+          id: crypto.randomUUID(),
+        });
       } else {
         newEdges.push(edge);
       }
-    } else if (
-      c1 === 0 &&
-      getParam(vertex1, orderOld.vertical) > orderOld.lx &&
-      getParam(vertex1, orderOld.vertical) < orderOld.rx
-    ) {
-      newEdges.push({
-        ...edge,
-        vertex2: vertex1,
-        id: crypto.randomUUID(),
-      });
-      newEdges.push({
-        ...edge,
-        vertex1: vertex1,
-        id: crypto.randomUUID(),
-      });
-    } else if (
-      c2 === 0 &&
-      getParam(vertex2, orderOld.vertical) > orderOld.lx &&
-      getParam(vertex2, orderOld.vertical) < orderOld.rx
-    ) {
-      newEdges.push({
-        ...edge,
-        vertex2: vertex2,
-        id: crypto.randomUUID(),
-      });
-      newEdges.push({
-        ...edge,
-        vertex1: vertex2,
-        id: crypto.randomUUID(),
-      });
-    } else if (
-      c3 === 0 &&
-      getParam(edge.vertex1, orderNew.vertical) > orderNew.lx &&
-      getParam(edge.vertex1, orderNew.vertical) < orderNew.rx
-    ) {
-      breakPoints.push(edge.vertex1);
-      newEdges.push(edge);
-    } else if (
-      c4 === 0 &&
-      getParam(edge.vertex2, orderNew.vertical) > orderNew.lx &&
-      getParam(edge.vertex2, orderNew.vertical) < orderNew.rx
-    ) {
-      breakPoints.push(edge.vertex2);
-      newEdges.push(edge);
-    } else {
-      newEdges.push(edge);
+      if (!isEndpoint({ vertex1, vertex2 }, intersection)) {
+        addPoint(intersection, breakPoints);
+      }
     }
   });
 
@@ -242,5 +132,61 @@ export const addEdge = (
   return {
     vertices: newVertices,
     edges: newEdges,
+  };
+};
+
+export const deleteEdge = (cp: CP, edgeId: string): CP => {
+  const newEdges = cp.edges.filter((e: Edge) => e.id !== edgeId);
+  const newVertices = [
+    ...newEdges.map((e: Edge) => e.vertex1),
+    ...newEdges.map((e: Edge) => e.vertex2),
+  ];
+  return {
+    edges: newEdges,
+    vertices: [...new Set(newVertices)],
+  };
+};
+
+export const edgeInBox = (edge: Edge, corner1: Point, corner2: Point) => {
+  const minX = Math.min(corner1.x, corner2.x);
+  const maxX = Math.max(corner1.x, corner2.x);
+  const minY = Math.min(corner1.y, corner2.y);
+  const maxY = Math.max(corner1.y, corner2.y);
+
+  const inBox = (p: Point) => {
+    return p.x >= minX && p.x <= maxX && p.y >= minY && p.y <= maxY;
+  };
+
+  if (inBox(edge.vertex1) || inBox(edge.vertex2)) {
+    return true;
+  }
+
+  const box = [
+    { x: minX, y: minY },
+    { x: maxX, y: minY },
+    { x: maxX, y: maxY },
+    { x: minX, y: maxY },
+  ];
+
+  return box.some((p: Point, ind: number) => {
+    return (
+      intersectSegments(p, box[(ind + 1) % 4], edge.vertex1, edge.vertex2) !==
+      null
+    );
+  });
+};
+
+export const deleteBox = (cp: CP, corner1: Point, corner2: Point): CP => {
+  const newEdges = cp.edges.filter(
+    (e: Edge) => !edgeInBox(e, corner1, corner2),
+  );
+  const newVertices = [
+    ...newEdges.map((e: Edge) => e.vertex1),
+    ...newEdges.map((e: Edge) => e.vertex2),
+  ];
+
+  return {
+    edges: newEdges,
+    vertices: [...new Set(newVertices)],
   };
 };

@@ -16,7 +16,7 @@
     "url": "https://github.com/65310-2025/ori3Dita"
   },
   "author": "",
-  "license": "ISC",
+  "license": "GPL-3.0-or-later",
   "homepage": "",
   "engines": {
     "node": ">=18.18.x"

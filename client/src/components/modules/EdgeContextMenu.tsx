@@ -5,14 +5,14 @@ import { useClickOutside } from "../hooks/clickOutside";
 import "./EdgeContextMenu.css";
 
 interface EdgeContextMenuProps {
-  edgeID: string;
+  selection: string[];
   cp: CP | null;
   setCP: (cp: CP) => void;
   setSelection: (selection: string[]) => void;
 }
 
 const EdgeContextMenu: React.FC<EdgeContextMenuProps> = ({
-  edgeID,
+  selection,
   cp,
   setCP,
   setSelection,
@@ -21,13 +21,19 @@ const EdgeContextMenu: React.FC<EdgeContextMenuProps> = ({
   const ref = useClickOutside<HTMLDivElement>(() => setSelection([]));
 
   useEffect(() => {
-    if (cp !== null) {
-      const edge = cp.edges.find((e: Edge) => e.id == edgeID);
+    if (cp !== null && selection.length >= 1) {
+      const edge = cp.edges.find((e: Edge) => e.id === selection[0]);
       if (edge) {
         setAngle(((edge.foldAngle / Math.PI) * 180).toFixed(1));
       }
     }
-  }, [cp, edgeID]);
+  }, [cp, selection]);
+
+  if (selection.length < 1) {
+    return null;
+  }
+
+  const edgeID = selection[0];
 
   const validateAngle = (angle: number) => {
     if (isNaN(angle)) {

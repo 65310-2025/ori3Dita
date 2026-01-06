@@ -86,9 +86,9 @@ const Editor: React.FC = () => {
           <div className="Viewer-container">
             <Viewer3D cp={cp} />
           </div>
-          <div className="viewer-buttons">
+          {/* <div className="viewer-buttons">
             <button>Hi</button>
-          </div>
+          </div> */}
         </div>
       </div>
     </>

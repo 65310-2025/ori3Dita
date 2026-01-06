@@ -1,6 +1,7 @@
-import deleteIcon from "../assets/icons/delete.svg";
-import drawIcon from "../assets/icons/draw.svg";
-import selectIcon from "../assets/icons/select.svg";
+import deleteIcon from "../assets/icons/eraser.svg";
+import drawIcon from "../assets/icons/pencil.svg";
+import changeMvIcon from "../assets/icons/switch_mv.svg";
+import selectIcon from "../assets/icons/wrench.svg";
 
 export enum MvMode {
   Mountain = "M",
@@ -30,7 +31,7 @@ export const modeIcons: Record<Mode, string> = {
   [Mode.Drawing]: drawIcon,
   [Mode.Selecting]: selectIcon,
   [Mode.Deleting]: deleteIcon,
-  [Mode.ChangeMV]: deleteIcon, // TODO: generate an icon for this
+  [Mode.ChangeMV]: changeMvIcon,
 };
 
 export const mvMap: Record<string, MvMode> = {

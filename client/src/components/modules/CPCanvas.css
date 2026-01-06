@@ -71,8 +71,8 @@
 }
 
 .Editor-canvas-modeIcon {
-  width: 32px;
-  margin: 10px;
+  width: 50px;
+  margin: 5px;
   filter: invert(var(--darkmode-invert));
 }
 
@@ -80,8 +80,8 @@
   color: var(--text-color);
   border: 2px solid;
   border-radius: 5px;
-  width: 32px;
-  margin: 10px;
+  width: 50px;
+  margin: 5px;
 }
 
 .Editor-canvas-toolbar:hover {
@@ -98,4 +98,35 @@
 
 .Editor-canvas-toolbar-icon-inactive:hover {
   opacity: 0.8;
+}
+
+.Delete-box {
+  fill: rgba(235, 100, 100, 0.3);
+  vector-effect: non-scaling-stroke;
+  stroke-width: 2;
+  stroke: rgba(225, 0, 0, 0.6);
+}
+
+.ChangeMv-box {
+  fill: var(--text-color-secondary);
+  fill-opacity: 0.3;
+  vector-effect: non-scaling-stroke;
+  stroke-width: 2;
+  stroke: var(--text-color);
+}
+
+#MvIcon-B {
+  color: var(--border-edge-color);
+}
+
+#MvIcon-A {
+  color: var(--aux-edge-color);
+}
+
+#MvIcon-M {
+  color: var(--mountain-edge-color);
+}
+
+#MvIcon-V {
+  color: var(--valley-edge-color);
 }

@@ -75,6 +75,9 @@ const Library: React.FC = () => {
       // Refresh designs
       const designs: Array<DesignMetadataDto> = await get("/api/designs");
       setDesigns(designs);
+
+      const newDesignMetadata: DesignMetadataDto = designs[designs.length - 1];
+      navigate(`/editor/${newDesignMetadata.cpID}`);
     } catch (error) {
       console.error("Failed to create new design:", error);
     }
@@ -98,6 +101,7 @@ const Library: React.FC = () => {
               name="name"
               label="Name"
               rules={[{ required: true, message: "Please enter the name" }]}
+              initialValue="Untitled"
             >
               <Input />
             </Form.Item>
@@ -107,6 +111,7 @@ const Library: React.FC = () => {
               rules={[
                 { required: true, message: "Please enter the description" },
               ]}
+              initialValue="New crease pattern"
             >
               <Input.TextArea />
             </Form.Item>
@@ -170,5 +175,3 @@ const Library: React.FC = () => {
 };
 
 export default Library;
-
-// TODO: add functionality for deleting files
