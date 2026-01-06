@@ -31,7 +31,7 @@ export const modeIcons: Record<Mode, string> = {
   [Mode.Drawing]: drawIcon,
   [Mode.Selecting]: selectIcon,
   [Mode.Deleting]: deleteIcon,
-  [Mode.ChangeMV]: changeMvIcon, // TODO: generate an icon for this
+  [Mode.ChangeMV]: changeMvIcon,
 };
 
 export const mvMap: Record<string, MvMode> = {
