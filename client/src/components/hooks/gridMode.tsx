@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Mode } from "../../types/ui";
 import GridSettings from "../modules/GridSettings";
 
@@ -70,7 +70,10 @@ export const useGridMode = (mode: Mode): UseGridModeReturn => {
     />
   ) : null;
 
-  const gridLines = showGrid ? <>{generateGridLines()}</> : null;
+  const gridLines = useMemo(() => {
+    if (!showGrid) return null;
+    return <>{generateGridLines()}</>;
+  }, [showGrid, gridSize]);
 
   return {
     modalOpen,

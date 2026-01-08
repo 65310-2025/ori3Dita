@@ -48,8 +48,8 @@
 }
 
 .grid-line {
-  stroke: #999;
-  stroke-width: 0.002;
+  stroke: var(--text-color-secondary);
+  stroke-width: 1;
   opacity: 0.3;
   pointer-events: none;
   vector-effect: non-scaling-stroke;
