@@ -59,6 +59,27 @@
   opacity: 0.8;
 }
 
+.Pen-previewDot {
+  pointer-events: none;
+  opacity: 0.9;
+}
+
+.Pen-previewDot-M {
+  fill: var(--mountain-edge-color);
+}
+
+.Pen-previewDot-V {
+  fill: var(--valley-edge-color);
+}
+
+.Pen-previewDot-B {
+  fill: var(--border-edge-color);
+}
+
+.Pen-previewDot-A {
+  fill: var(--aux-edge-color);
+}
+
 .Editor-canvas-toolbar {
   display: flex;
   position: absolute;

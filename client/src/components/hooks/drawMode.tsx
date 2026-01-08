@@ -3,9 +3,19 @@ import React, { useEffect, useRef } from "react";
 import { CP, Point } from "../../types/cp";
 import { Mode, MvMode } from "../../types/ui";
 import { addEdge } from "../../utils/cpEdit";
+import {
+  DRAW_PREVIEW_DOT_RADIUS_PX,
+  DRAW_SNAP_TOLERANCE_PX,
+} from "../tuning/editorTuning";
 import { useDrag } from "./drag";
+import { ViewBox } from "./panZoom";
 
-const SNAP_TOLERANCE = 0.03;
+const FALLBACK_SNAP_TOLERANCE_WORLD = 0.03;
+
+interface CanvasSize {
+  width: number;
+  height: number;
+}
 
 export interface GridSnapConfig {
   enabled: boolean;
@@ -18,10 +28,49 @@ export const useDrawMode = (
   setCP: (cp: CP) => void,
   mvMode: MvMode,
   mode: Mode,
+  viewBox: ViewBox,
+  canvasSize: CanvasSize,
   gridSnap?: GridSnapConfig,
 ) => {
   const pathRef = useRef<SVGPathElement | null>(null);
-  const ui = <path ref={pathRef} className={`Edge Edge-${mvMode} Pen-path`} />;
+  const dotRef = useRef<SVGCircleElement | null>(null);
+
+  const getWorldPerPx = (): number => {
+    const widthWorld = 1 / viewBox.zoom;
+    const heightWorld = 1 / viewBox.zoom;
+
+    const scalePx = Math.min(canvasSize.width, canvasSize.height);
+    if (!Number.isFinite(scalePx) || scalePx <= 0) {
+      return 0;
+    }
+
+    // Match SVG's default preserveAspectRatio behavior (uniform scale).
+    const viewBoxWorldSize = Math.max(widthWorld, heightWorld);
+    return viewBoxWorldSize / scalePx;
+  };
+
+  const snapToleranceWorld = (() => {
+    const worldPerPx = getWorldPerPx();
+    if (worldPerPx <= 0) return FALLBACK_SNAP_TOLERANCE_WORLD;
+    return DRAW_SNAP_TOLERANCE_PX * worldPerPx;
+  })();
+
+  const previewDotRadiusWorld = (() => {
+    const worldPerPx = getWorldPerPx();
+    if (worldPerPx <= 0) return 0;
+    return DRAW_PREVIEW_DOT_RADIUS_PX * worldPerPx;
+  })();
+
+  const ui = (
+    <>
+      <path ref={pathRef} className={`Edge Edge-${mvMode} Pen-path`} />
+      <circle
+        ref={dotRef}
+        className={`Pen-previewDot Pen-previewDot-${mvMode}`}
+        r={0}
+      />
+    </>
+  );
 
   const distance = (p1: Point, p2: Point) => {
     return Math.sqrt((p1.x - p2.x) ** 2 + (p1.y - p2.y) ** 2);
@@ -29,7 +78,9 @@ export const useDrawMode = (
 
   const snapToCPVertex = (point: Point): Point | null => {
     if (cp === null) return null;
-    return cp.vertices.find((p) => distance(p, point) <= SNAP_TOLERANCE) ?? null;
+    return (
+      cp.vertices.find((p) => distance(p, point) <= snapToleranceWorld) ?? null
+    );
   };
 
   const snapToCPMidpoint = (point: Point): Point | null => {
@@ -39,7 +90,7 @@ export const useDrawMode = (
         x: (edge.vertex1.x + edge.vertex2.x) / 2,
         y: (edge.vertex1.y + edge.vertex2.y) / 2,
       };
-      if (distance(mid, point) <= SNAP_TOLERANCE) {
+      if (distance(mid, point) <= snapToleranceWorld) {
         return mid;
       }
     }
@@ -60,7 +111,7 @@ export const useDrawMode = (
         return null;
       }
     }
-    return distance(snapped, point) <= SNAP_TOLERANCE ? snapped : null;
+    return distance(snapped, point) <= snapToleranceWorld ? snapped : null;
   };
 
   const snapRequired = (point: Point): Point | null => {
@@ -70,6 +121,7 @@ export const useDrawMode = (
 
   const clearPath = () => {
     pathRef.current?.setAttribute("d", "");
+    dotRef.current?.setAttribute("r", "0");
   };
 
   const onMove = (start: Point, end: Point) => {
@@ -80,6 +132,14 @@ export const useDrawMode = (
       "d",
       `M${start.x} ${start.y} L ${endPoint.x} ${endPoint.y}`,
     );
+
+    if (snapEnd && previewDotRadiusWorld > 0) {
+      dotRef.current?.setAttribute("cx", `${snapEnd.x}`);
+      dotRef.current?.setAttribute("cy", `${snapEnd.y}`);
+      dotRef.current?.setAttribute("r", `${previewDotRadiusWorld}`);
+    } else {
+      dotRef.current?.setAttribute("r", "0");
+    }
   };
 
   const submit = (start: Point, end: Point) => {
