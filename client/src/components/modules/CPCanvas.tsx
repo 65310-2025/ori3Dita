@@ -5,15 +5,18 @@ import {
   Mode,
   MvMode,
   modeIcons,
+  modeNeedsMvModeSwitcher,
   modeKeys,
   modeMap,
   mvKeys,
   mvMap,
 } from "../../types/ui";
 import { getSnapPoints } from "../../utils/cpEdit";
+import { pointToKey } from "../../utils/cp";
 import { useChangeMvMode } from "../hooks/changeMvMode";
 import { useDeleteMode } from "../hooks/deleteMode";
 import { useDrawMode } from "../hooks/drawMode";
+import { useGridMode } from "../hooks/gridMode";
 import { useModeSwitcher } from "../hooks/modeSwitcher";
 import { ViewBox, useCanvasControls } from "../hooks/panZoom";
 import { useSelectMode } from "../hooks/selectMode";
@@ -30,8 +33,21 @@ const renderCP = (
     edge: Edge,
   ) => (event: React.PointerEvent<SVGPathElement>) => void,
   mode: Mode,
+  extraHoverPoints: Point[] = [],
 ) => {
-  const vertices = mode === Mode.Drawing ? getSnapPoints(cp) : cp.vertices;
+  const baseVertices = mode === Mode.Drawing ? getSnapPoints(cp) : cp.vertices;
+  const vertices = (() => {
+    if (mode !== Mode.Drawing) return baseVertices;
+    const unique: Point[] = [];
+    const seen = new Set<string>();
+    for (const p of [...baseVertices, ...extraHoverPoints]) {
+      const key = pointToKey(p);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      unique.push(p);
+    }
+    return unique;
+  })();
   const verticesComponents = vertices.map((v: Point, idx: number) => {
     return (
       <circle
@@ -104,12 +120,26 @@ const CPCanvas: React.FC<CPCanvasProps> = ({ cp, setCP }) => {
     edgeOnClick: selectEdgeOnClick,
   } = useSelectMode(mode);
   const {
+    modalOpen,
+    toggleModal,
+    gridUi,
+    gridLines,
+    showGrid,
+    gridSize,
+    extendGrid,
+    gridHoverPoints,
+  } = useGridMode(mode, viewBox, { width, height });
+  const {
     ui: drawUi,
     onPointerDown: drawOnPointerDown,
     onPointerMove: drawOnPointerMove,
     onPointerUp: drawOnPointerUp,
     onKeyDown: drawOnKeyDown,
-  } = useDrawMode(cp, setCP, mvMode, mode);
+  } = useDrawMode(cp, setCP, mvMode, mode, viewBox, { width, height }, {
+    enabled: showGrid,
+    gridSize,
+    extend: extendGrid,
+  });
   const {
     ui: deleteUi,
     onPointerDown: deleteOnPointerDown,
@@ -180,8 +210,10 @@ const CPCanvas: React.FC<CPCanvasProps> = ({ cp, setCP }) => {
 
   const onKeyDown = (e: React.KeyboardEvent) => {
     modeOnKeyDown(e);
-    if (mode === Mode.Drawing) {
+    if (modeNeedsMvModeSwitcher(mode) && !modalOpen) {
       mvModeOnKeyDown(e);
+    }
+    if (mode === Mode.Drawing) {
       drawOnKeyDown(e);
     } else if (mode === Mode.Deleting) {
       deleteOnKeyDown(e);
@@ -191,6 +223,17 @@ const CPCanvas: React.FC<CPCanvasProps> = ({ cp, setCP }) => {
   };
 
   const icons = Object.values(Mode).map((m) => {
+    // Handle Grid mode specially - it opens a modal instead of changing mode
+    if (m === Mode.Grid) {
+      return (
+        <button key={m} onClick={toggleModal}>
+          <img
+            src={modeIcons[m]}
+            className={`Editor-canvas-toolbar-icon-${modalOpen ? "active" : "inactive"} Editor-canvas-modeIcon`}
+          />
+        </button>
+      );
+    }
     return (
       <button key={m} onClick={() => setMode(m)}>
         <img
@@ -241,8 +284,9 @@ const CPCanvas: React.FC<CPCanvasProps> = ({ cp, setCP }) => {
         onWheel={onWheel}
       >
         <g className="CP">
+          {gridLines}
           {cp !== null
-            ? renderCP(cp, viewBox, selection, edgeOnClick, mode)
+            ? renderCP(cp, viewBox, selection, edgeOnClick, mode, gridHoverPoints)
             : null}
         </g>
         {drawUi}
@@ -253,7 +297,7 @@ const CPCanvas: React.FC<CPCanvasProps> = ({ cp, setCP }) => {
         {icons}
       </div>
       <div className="Editor-canvas-toolbar" id="MvMode-toolbar">
-        {mode === Mode.Drawing ? mvIcons : null}
+        {modeNeedsMvModeSwitcher(mode) && !modalOpen ? mvIcons : null}
       </div>
       <EdgeContextMenu
         selection={selection}
@@ -261,6 +305,7 @@ const CPCanvas: React.FC<CPCanvasProps> = ({ cp, setCP }) => {
         setCP={setCP}
         setSelection={setSelection}
       />
+      {gridUi}
     </div>
   );
 };
