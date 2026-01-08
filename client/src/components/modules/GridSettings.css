@@ -1,0 +1,45 @@
+.Grid-settings {
+  width: 250px;
+  border-radius: 25px;
+  background-color: var(--foreground);
+  position: absolute;
+  inset-block-start: 50px;
+  inset-inline-start: 90px;
+  z-index: 10;
+}
+
+.Grid-settings-title h3 {
+  color: var(--text-color);
+  margin: 20px 25px;
+  font-size: 1.5em;
+  font-weight: bold;
+}
+
+.Grid-settings-form {
+  padding: 0px 25px 20px 25px;
+  color: var(--text-color);
+  font-size: 1em;
+}
+
+.Grid-settings-form-label {
+  display: block;
+  margin-bottom: 10px;
+  cursor: pointer;
+}
+
+.Grid-settings-form-label input[type="checkbox"] {
+  margin-right: 10px;
+  cursor: pointer;
+}
+
+.Grid-settings-form-text {
+  height: calc(1em + 15px);
+  width: 100%;
+  color: var(--text-color);
+  font-size: 1em;
+  background: var(--background);
+  margin-top: 10px;
+  padding-left: 5px;
+  border: 1px solid var(--text-color);
+  border-radius: 5px;
+}

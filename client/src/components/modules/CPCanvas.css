@@ -47,6 +47,14 @@
   stroke: var(--valley-edge-color);
 }
 
+.grid-line {
+  stroke: #999;
+  stroke-width: 0.002;
+  opacity: 0.3;
+  pointer-events: none;
+  vector-effect: non-scaling-stroke;
+}
+
 .Pen-path {
   opacity: 0.8;
 }

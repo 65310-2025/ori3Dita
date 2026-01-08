@@ -14,6 +14,7 @@ import { getSnapPoints } from "../../utils/cpEdit";
 import { useChangeMvMode } from "../hooks/changeMvMode";
 import { useDeleteMode } from "../hooks/deleteMode";
 import { useDrawMode } from "../hooks/drawMode";
+import { useGridMode } from "../hooks/gridMode";
 import { useModeSwitcher } from "../hooks/modeSwitcher";
 import { ViewBox, useCanvasControls } from "../hooks/panZoom";
 import { useSelectMode } from "../hooks/selectMode";
@@ -125,6 +126,7 @@ const CPCanvas: React.FC<CPCanvasProps> = ({ cp, setCP }) => {
     onKeyDown: changeMvOnKeyDown,
     edgeOnClick: changeMvEdgeOnClick,
   } = useChangeMvMode(cp, setCP, mode);
+  const { modalOpen, toggleModal, gridUi, gridLines } = useGridMode(mode);
 
   useLayoutEffect(() => {
     if (!editorRef.current) return;
@@ -191,6 +193,17 @@ const CPCanvas: React.FC<CPCanvasProps> = ({ cp, setCP }) => {
   };
 
   const icons = Object.values(Mode).map((m) => {
+    // Handle Grid mode specially - it opens a modal instead of changing mode
+    if (m === Mode.Grid) {
+      return (
+        <button key={m} onClick={toggleModal}>
+          <img
+            src={modeIcons[m]}
+            className={`Editor-canvas-toolbar-icon-${modalOpen ? "active" : "inactive"} Editor-canvas-modeIcon`}
+          />
+        </button>
+      );
+    }
     return (
       <button key={m} onClick={() => setMode(m)}>
         <img
@@ -241,6 +254,7 @@ const CPCanvas: React.FC<CPCanvasProps> = ({ cp, setCP }) => {
         onWheel={onWheel}
       >
         <g className="CP">
+          {gridLines}
           {cp !== null
             ? renderCP(cp, viewBox, selection, edgeOnClick, mode)
             : null}
@@ -261,6 +275,7 @@ const CPCanvas: React.FC<CPCanvasProps> = ({ cp, setCP }) => {
         setCP={setCP}
         setSelection={setSelection}
       />
+      {gridUi}
     </div>
   );
 };
