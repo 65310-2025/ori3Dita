@@ -4,9 +4,11 @@ import "./GridSettings.css";
 
 interface GridSettingsProps {
   showGrid: boolean;
-  setShowGrid: (show: boolean) => void;
+  setShowGrid: React.Dispatch<React.SetStateAction<boolean>>;
   gridSize: number;
-  setGridSize: (size: number) => void;
+  setGridSize: React.Dispatch<React.SetStateAction<number>>;
+  extendGrid: boolean;
+  setExtendGrid: React.Dispatch<React.SetStateAction<boolean>>;
   onClose: () => void;
 }
 
@@ -15,6 +17,8 @@ const GridSettings: React.FC<GridSettingsProps> = ({
   setShowGrid,
   gridSize,
   setGridSize,
+  extendGrid,
+  setExtendGrid,
   onClose,
 }) => {
   const ref = useClickOutside<HTMLDivElement>(onClose);
@@ -26,6 +30,18 @@ const GridSettings: React.FC<GridSettingsProps> = ({
       const clamped = Math.max(1, Math.round(parsed));
       setGridSize(clamped);
     }
+  };
+
+  const clampGridSize = (size: number) => {
+    return Math.max(1, Math.round(size));
+  };
+
+  const halveGridSize = () => {
+    setGridSize((prev) => clampGridSize(prev / 2));
+  };
+
+  const doubleGridSize = () => {
+    setGridSize((prev) => clampGridSize(prev * 2));
   };
 
   return (
@@ -42,8 +58,15 @@ const GridSettings: React.FC<GridSettingsProps> = ({
           />
           Display Grid
         </label>
+        <label className="Grid-settings-form-label">
+          <input
+            type="checkbox"
+            checked={extendGrid}
+            onChange={(e) => setExtendGrid(e.target.checked)}
+          />
+          Extend grid
+        </label>
         <label className="Grid-settings-form-label" htmlFor="gridSize">
-          Grid Size:
         </label>
         <input
           className="Grid-settings-form-text"
@@ -55,6 +78,22 @@ const GridSettings: React.FC<GridSettingsProps> = ({
           value={gridSize}
           onChange={(e) => handleGridSizeChange(e.target.value)}
         />
+        <div className="Grid-settings-form-actions">
+          <button
+            type="button"
+            className="Grid-settings-form-action"
+            onClick={halveGridSize}
+          >
+            ×½
+          </button>
+          <button
+            type="button"
+            className="Grid-settings-form-action"
+            onClick={doubleGridSize}
+          >
+            ×2
+          </button>
+        </div>
       </div>
     </div>
   );

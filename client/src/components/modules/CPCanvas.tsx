@@ -11,6 +11,7 @@ import {
   mvMap,
 } from "../../types/ui";
 import { getSnapPoints } from "../../utils/cpEdit";
+import { pointToKey } from "../../utils/cp";
 import { useChangeMvMode } from "../hooks/changeMvMode";
 import { useDeleteMode } from "../hooks/deleteMode";
 import { useDrawMode } from "../hooks/drawMode";
@@ -31,8 +32,21 @@ const renderCP = (
     edge: Edge,
   ) => (event: React.PointerEvent<SVGPathElement>) => void,
   mode: Mode,
+  extraHoverPoints: Point[] = [],
 ) => {
-  const vertices = mode === Mode.Drawing ? getSnapPoints(cp) : cp.vertices;
+  const baseVertices = mode === Mode.Drawing ? getSnapPoints(cp) : cp.vertices;
+  const vertices = (() => {
+    if (mode !== Mode.Drawing) return baseVertices;
+    const unique: Point[] = [];
+    const seen = new Set<string>();
+    for (const p of [...baseVertices, ...extraHoverPoints]) {
+      const key = pointToKey(p);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      unique.push(p);
+    }
+    return unique;
+  })();
   const verticesComponents = vertices.map((v: Point, idx: number) => {
     return (
       <circle
@@ -105,12 +119,26 @@ const CPCanvas: React.FC<CPCanvasProps> = ({ cp, setCP }) => {
     edgeOnClick: selectEdgeOnClick,
   } = useSelectMode(mode);
   const {
+    modalOpen,
+    toggleModal,
+    gridUi,
+    gridLines,
+    showGrid,
+    gridSize,
+    extendGrid,
+    gridHoverPoints,
+  } = useGridMode(mode, viewBox, { width, height });
+  const {
     ui: drawUi,
     onPointerDown: drawOnPointerDown,
     onPointerMove: drawOnPointerMove,
     onPointerUp: drawOnPointerUp,
     onKeyDown: drawOnKeyDown,
-  } = useDrawMode(cp, setCP, mvMode, mode);
+  } = useDrawMode(cp, setCP, mvMode, mode, {
+    enabled: showGrid,
+    gridSize,
+    extend: extendGrid,
+  });
   const {
     ui: deleteUi,
     onPointerDown: deleteOnPointerDown,
@@ -126,7 +154,6 @@ const CPCanvas: React.FC<CPCanvasProps> = ({ cp, setCP }) => {
     onKeyDown: changeMvOnKeyDown,
     edgeOnClick: changeMvEdgeOnClick,
   } = useChangeMvMode(cp, setCP, mode);
-  const { modalOpen, toggleModal, gridUi, gridLines } = useGridMode(mode);
 
   useLayoutEffect(() => {
     if (!editorRef.current) return;
@@ -256,7 +283,7 @@ const CPCanvas: React.FC<CPCanvasProps> = ({ cp, setCP }) => {
         <g className="CP">
           {gridLines}
           {cp !== null
-            ? renderCP(cp, viewBox, selection, edgeOnClick, mode)
+            ? renderCP(cp, viewBox, selection, edgeOnClick, mode, gridHoverPoints)
             : null}
         </g>
         {drawUi}

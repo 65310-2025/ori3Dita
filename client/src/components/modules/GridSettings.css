@@ -43,3 +43,24 @@
   border: 1px solid var(--text-color);
   border-radius: 5px;
 }
+
+.Grid-settings-form-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.Grid-settings-form-action {
+  flex: 1;
+  height: calc(1em + 15px);
+  color: var(--text-color);
+  font-size: 1em;
+  background: var(--background);
+  border: 1px solid var(--text-color);
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.Grid-settings-form-action:hover {
+  opacity: 0.8;
+}

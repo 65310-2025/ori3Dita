@@ -1,8 +1,8 @@
 import deleteIcon from "../assets/icons/eraser.svg";
-import drawIcon from "../assets/icons/pencil.svg";
+import drawIcon from "../assets/icons/pencil_snapping.svg";
 import changeMvIcon from "../assets/icons/switch_mv.svg";
 import selectIcon from "../assets/icons/wrench.svg";
-import gridIcon from "../assets/icons/library.svg";
+import gridIcon from "../assets/icons/grid.svg";
 
 export enum MvMode {
   Mountain = "M",
