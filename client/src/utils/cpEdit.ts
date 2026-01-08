@@ -1,9 +1,17 @@
 import { CP, Edge, EdgeAssignment, Point } from "../types/cp";
 import { MvMode } from "../types/ui";
 import { isEndpoint, pointsEqual } from "./cp";
-import { intersectSegments, onSegment } from "./geometry";
+import {
+  edgeLength,
+  getEdgeAngle,
+  intersectSegments,
+  lineDistance,
+  onSegment,
+  projectToLine,
+} from "./geometry";
 
 const SNAP_TOLERANCE = 0.03;
+const SNAP_ANGLE_TOLERANCE = Math.PI / 36;
 
 export const getSnapPoints = (cp: CP) => {
   return [
@@ -17,7 +25,12 @@ export const getSnapPoints = (cp: CP) => {
   ];
 };
 
-export const snapVertex = (cp: CP, point: Point) => {
+export const snapVertex = (
+  cp: CP,
+  point: Point,
+  zoom: number,
+  start: Point | null = null,
+) => {
   const snapPoints = getSnapPoints(cp);
 
   const distance = (p: Point) => {
@@ -26,7 +39,35 @@ export const snapVertex = (cp: CP, point: Point) => {
     );
   };
 
-  return snapPoints.find((p: Point) => distance(p) <= SNAP_TOLERANCE);
+  const vertex = snapPoints.find(
+    (p: Point) => distance(p) <= SNAP_TOLERANCE / zoom,
+  );
+  if (vertex) {
+    return vertex;
+  }
+
+  if (start) {
+    const startEdges = cp.edges.filter((e: Edge) => isEndpoint(e, start));
+    startEdges.sort((a, b) => {
+      const angleA = getEdgeAngle(a, start);
+      const angleB = getEdgeAngle(b, start);
+      return angleA - angleB;
+    });
+    startEdges.forEach((e: Edge, idx: number) => {
+      const angle1 = Math.acos();
+    });
+  }
+
+  const edge = cp.edges.find((e: Edge) => {
+    return (
+      lineDistance(e, point) <= SNAP_TOLERANCE / zoom &&
+      (!start || !isEndpoint(e, start)) &&
+      onSegment(e.vertex1, e.vertex2, projectToLine(e, point))
+    );
+  });
+  if (edge) {
+    return projectToLine(edge, point);
+  }
 };
 
 export const addEdge = (

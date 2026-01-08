@@ -109,7 +109,7 @@ const CPCanvas: React.FC<CPCanvasProps> = ({ cp, setCP }) => {
     onPointerMove: drawOnPointerMove,
     onPointerUp: drawOnPointerUp,
     onKeyDown: drawOnKeyDown,
-  } = useDrawMode(cp, setCP, mvMode, mode);
+  } = useDrawMode(cp, setCP, mvMode, mode, viewBox);
   const {
     ui: deleteUi,
     onPointerDown: deleteOnPointerDown,
