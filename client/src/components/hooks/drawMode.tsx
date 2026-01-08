@@ -74,29 +74,24 @@ export const useDrawMode = (
 
   const onMove = (start: Point, end: Point) => {
     if (cp === null) return;
-    const snapStart = snapRequired(start);
     const snapEnd = snapRequired(end);
-    if (snapStart === null || snapEnd === null) {
-      clearPath();
-      return;
-    }
+    const endPoint = snapEnd ?? end;
     pathRef.current?.setAttribute(
       "d",
-      `M${snapStart.x} ${snapStart.y} L ${snapEnd.x} ${snapEnd.y}`,
+      `M${start.x} ${start.y} L ${endPoint.x} ${endPoint.y}`,
     );
   };
 
   const submit = (start: Point, end: Point) => {
     if (cp === null) return;
-    const snapStart = snapRequired(start);
     const snapEnd = snapRequired(end);
-    if (snapStart === null || snapEnd === null) {
-      return;
-    }
-    setCP(addEdge(cp, snapStart, snapEnd, mvMode));
+    if (snapEnd === null) return;
+    setCP(addEdge(cp, start, snapEnd, mvMode));
   };
 
-  const dragHandler = useDrag(onMove, submit, clearPath);
+  const dragHandler = useDrag(onMove, submit, clearPath, {
+    transformStart: snapRequired,
+  });
 
   useEffect(() => {
     if (mode !== Mode.Drawing) {

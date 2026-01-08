@@ -5,6 +5,7 @@ import {
   Mode,
   MvMode,
   modeIcons,
+  modeNeedsMvModeSwitcher,
   modeKeys,
   modeMap,
   mvKeys,
@@ -209,8 +210,10 @@ const CPCanvas: React.FC<CPCanvasProps> = ({ cp, setCP }) => {
 
   const onKeyDown = (e: React.KeyboardEvent) => {
     modeOnKeyDown(e);
-    if (mode === Mode.Drawing) {
+    if (modeNeedsMvModeSwitcher(mode) && !modalOpen) {
       mvModeOnKeyDown(e);
+    }
+    if (mode === Mode.Drawing) {
       drawOnKeyDown(e);
     } else if (mode === Mode.Deleting) {
       deleteOnKeyDown(e);
@@ -294,7 +297,7 @@ const CPCanvas: React.FC<CPCanvasProps> = ({ cp, setCP }) => {
         {icons}
       </div>
       <div className="Editor-canvas-toolbar" id="MvMode-toolbar">
-        {mode === Mode.Drawing ? mvIcons : null}
+        {modeNeedsMvModeSwitcher(mode) && !modalOpen ? mvIcons : null}
       </div>
       <EdgeContextMenu
         selection={selection}
