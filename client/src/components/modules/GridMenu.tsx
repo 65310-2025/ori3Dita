@@ -34,12 +34,14 @@ const GridMenu: React.FC<GridSettingsProps> = ({
 
   const halveGridSize = () => {
     setGridSettings((prev: GridSettings) => {
+      setGridSizeValue(String(prev.gridSize / 2));
       return { ...prev, gridSize: clampGridSize(prev.gridSize / 2) };
     });
   };
 
   const doubleGridSize = () => {
     setGridSettings((prev: GridSettings) => {
+      setGridSizeValue(String(prev.gridSize * 2));
       return { ...prev, gridSize: clampGridSize(prev.gridSize * 2) };
     });
   };
