@@ -3,6 +3,7 @@
   width: 60vw;
   height: calc(100vh - var(--header-height));
   position: relative;
+  display: flex;
 }
 
 .CP-vertex {
@@ -88,20 +89,21 @@
 }
 
 #Mode-toolbar {
-  flex-direction: column;
-  inset-block-start: 50px;
-  inset-inline-start: 25px;
+  flex-direction: row;
+  position: relative;
+  height: 80px;
+  border-radius: 0;
 }
 
 #MvMode-toolbar {
   flex-direction: row;
-  inset-block-start: 30px;
-  inset-inline-start: 120px;
+  inset-block-start: 110px;
+  inset-inline-start: calc(100px + 20vw);
 }
 
 .Editor-canvas-modeIcon {
-  width: 50px;
-  margin: 5px;
+  width: 60px;
+  padding: 5px;
   filter: invert(var(--darkmode-invert));
 }
 
@@ -110,7 +112,7 @@
   border: 2px solid;
   border-radius: 5px;
   width: 50px;
-  margin: 5px;
+  padding: 5px;
 }
 
 .Editor-canvas-toolbar:hover {
@@ -123,6 +125,7 @@
 
 .Editor-canvas-toolbar-icon-active {
   opacity: 1;
+  background-color: rgb(var(--toolbar-bg) / 0.3);
 }
 
 .Editor-canvas-toolbar-icon-inactive:hover {
@@ -158,4 +161,21 @@
 
 #MvIcon-V {
   color: var(--valley-edge-color);
+}
+
+.Canvas-sidebar {
+  width: 20vw;
+  background: #000000;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.Canvas {
+  width: 40vw;
+  height: calc(100% - 80px);
+}
+
+.Canvas-toolbar-wrap {
+  width: 40vw;
 }

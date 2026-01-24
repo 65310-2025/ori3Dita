@@ -1,11 +1,5 @@
 .Edge-menu {
-  width: 250px;
-  /* height: 300px; */
-  border-radius: 25px;
   background-color: var(--foreground);
-  position: absolute;
-  inset-block-start: 40px;
-  inset-inline-end: 40px;
 }
 
 .Edge-menu-title h3 {

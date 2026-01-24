@@ -1,10 +1,5 @@
 .Grid-settings {
-  width: 250px;
-  border-radius: 25px;
   background-color: var(--foreground);
-  position: absolute;
-  inset-block-start: 50px;
-  inset-inline-start: 90px;
   z-index: 10;
 }
 
@@ -52,7 +47,7 @@
 
 .Grid-settings-form-action {
   flex: 1;
-  height: calc(1em + 15px);
+  height: calc(1em + 25px);
   color: var(--text-color);
   font-size: 1em;
   background: var(--background);

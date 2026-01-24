@@ -1,29 +1,32 @@
 import React, { useLayoutEffect, useRef, useState } from "react";
 
-import { CP, Edge, Point } from "../../types/cp";
 import {
-  Mode,
-  MvMode,
+  CIRCLE_RADIUS,
   modeIcons,
-  modeNeedsMvModeSwitcher,
   modeKeys,
   modeMap,
   mvKeys,
   mvMap,
+} from "../../constants/editor";
+import { CP, Edge, Point } from "../../types/cp";
+import {
+  GridSettings,
+  Mode,
+  MvMode,
+  ViewBox,
+  defaultGridSettings,
 } from "../../types/ui";
 import { getSnapPoints } from "../../utils/cpEdit";
-import { pointToKey } from "../../utils/cp";
 import { useChangeMvMode } from "../hooks/changeMvMode";
 import { useDeleteMode } from "../hooks/deleteMode";
 import { useDrawMode } from "../hooks/drawMode";
-import { useGridMode } from "../hooks/gridMode";
 import { useModeSwitcher } from "../hooks/modeSwitcher";
-import { ViewBox, useCanvasControls } from "../hooks/panZoom";
+import { useCanvasControls } from "../hooks/panZoom";
 import { useSelectMode } from "../hooks/selectMode";
 import "./CPCanvas.css";
 import EdgeContextMenu from "./EdgeContextMenu";
-
-const CIRCLE_RADIUS = 0.015;
+import Grid from "./Grid";
+import GridMenu from "./GridMenu";
 
 const renderCP = (
   cp: CP,
@@ -33,21 +36,12 @@ const renderCP = (
     edge: Edge,
   ) => (event: React.PointerEvent<SVGPathElement>) => void,
   mode: Mode,
-  extraHoverPoints: Point[] = [],
+  gridSettings: GridSettings,
 ) => {
-  const baseVertices = mode === Mode.Drawing ? getSnapPoints(cp) : cp.vertices;
-  const vertices = (() => {
-    if (mode !== Mode.Drawing) return baseVertices;
-    const unique: Point[] = [];
-    const seen = new Set<string>();
-    for (const p of [...baseVertices, ...extraHoverPoints]) {
-      const key = pointToKey(p);
-      if (seen.has(key)) continue;
-      seen.add(key);
-      unique.push(p);
-    }
-    return unique;
-  })();
+  const vertices =
+    mode === Mode.Drawing
+      ? getSnapPoints(cp, gridSettings, viewBox)
+      : cp.vertices;
   const verticesComponents = vertices.map((v: Point, idx: number) => {
     return (
       <circle
@@ -119,27 +113,16 @@ const CPCanvas: React.FC<CPCanvasProps> = ({ cp, setCP }) => {
     setSelection,
     edgeOnClick: selectEdgeOnClick,
   } = useSelectMode(mode);
-  const {
-    modalOpen,
-    toggleModal,
-    gridUi,
-    gridLines,
-    showGrid,
-    gridSize,
-    extendGrid,
-    gridHoverPoints,
-  } = useGridMode(mode, viewBox, { width, height });
+  const [gridSettings, setGridSettings] =
+    useState<GridSettings>(defaultGridSettings);
+
   const {
     ui: drawUi,
     onPointerDown: drawOnPointerDown,
     onPointerMove: drawOnPointerMove,
     onPointerUp: drawOnPointerUp,
     onKeyDown: drawOnKeyDown,
-  } = useDrawMode(cp, setCP, mvMode, mode, viewBox, { width, height }, {
-    enabled: showGrid,
-    gridSize,
-    extend: extendGrid,
-  });
+  } = useDrawMode(cp, setCP, mvMode, mode, gridSettings, viewBox);
   const {
     ui: deleteUi,
     onPointerDown: deleteOnPointerDown,
@@ -210,10 +193,8 @@ const CPCanvas: React.FC<CPCanvasProps> = ({ cp, setCP }) => {
 
   const onKeyDown = (e: React.KeyboardEvent) => {
     modeOnKeyDown(e);
-    if (modeNeedsMvModeSwitcher(mode) && !modalOpen) {
-      mvModeOnKeyDown(e);
-    }
     if (mode === Mode.Drawing) {
+      mvModeOnKeyDown(e);
       drawOnKeyDown(e);
     } else if (mode === Mode.Deleting) {
       deleteOnKeyDown(e);
@@ -223,17 +204,6 @@ const CPCanvas: React.FC<CPCanvasProps> = ({ cp, setCP }) => {
   };
 
   const icons = Object.values(Mode).map((m) => {
-    // Handle Grid mode specially - it opens a modal instead of changing mode
-    if (m === Mode.Grid) {
-      return (
-        <button key={m} onClick={toggleModal}>
-          <img
-            src={modeIcons[m]}
-            className={`Editor-canvas-toolbar-icon-${modalOpen ? "active" : "inactive"} Editor-canvas-modeIcon`}
-          />
-        </button>
-      );
-    }
     return (
       <button key={m} onClick={() => setMode(m)}>
         <img
@@ -267,45 +237,62 @@ const CPCanvas: React.FC<CPCanvasProps> = ({ cp, setCP }) => {
     };
   };
 
+  const getViewBox = () => {
+    if (width > height) {
+      return `${viewBox.x} ${viewBox.y} ${1 / viewBox.zoom} ${(1 / viewBox.zoom / width) * height}`;
+    }
+    return `${viewBox.x} ${viewBox.y} ${(1 / viewBox.zoom / height) * width} ${1 / viewBox.zoom}`;
+  };
+
   return (
-    <div
-      className="Editor-canvas-wrap"
-      ref={editorRef}
-      tabIndex={1}
-      onKeyDown={onKeyDown}
-    >
-      <svg
-        width={width}
-        height={height}
-        viewBox={`${viewBox.x} ${viewBox.y} ${1 / viewBox.zoom} ${1 / viewBox.zoom}`}
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={onPointerUp}
-        onWheel={onWheel}
-      >
-        <g className="CP">
-          {gridLines}
-          {cp !== null
-            ? renderCP(cp, viewBox, selection, edgeOnClick, mode, gridHoverPoints)
-            : null}
-        </g>
-        {drawUi}
-        {deleteUi}
-        {changeMvUi}
-      </svg>
-      <div className="Editor-canvas-toolbar" id="Mode-toolbar">
-        {icons}
+    <div className="Editor-canvas-wrap" tabIndex={1} onKeyDown={onKeyDown}>
+      <div className="Canvas-sidebar">
+        <GridMenu
+          gridSettings={gridSettings}
+          setGridSettings={setGridSettings}
+        />
+        <EdgeContextMenu
+          selection={selection}
+          cp={cp}
+          setCP={setCP}
+          setSelection={setSelection}
+        />
       </div>
-      <div className="Editor-canvas-toolbar" id="MvMode-toolbar">
-        {modeNeedsMvModeSwitcher(mode) && !modalOpen ? mvIcons : null}
+      <div className="Canvas-toolbar-wrap">
+        <div className="Editor-canvas-toolbar" id="Mode-toolbar">
+          {icons}
+        </div>
+        <div className="Canvas" ref={editorRef}>
+          <svg
+            width={width}
+            height={height}
+            viewBox={getViewBox()}
+            onPointerDown={onPointerDown}
+            onPointerMove={onPointerMove}
+            onPointerUp={onPointerUp}
+            onWheel={onWheel}
+          >
+            <g className="CP">
+              {cp &&
+                renderCP(
+                  cp,
+                  viewBox,
+                  selection,
+                  edgeOnClick,
+                  mode,
+                  gridSettings,
+                )}
+            </g>
+            {drawUi}
+            {deleteUi}
+            {changeMvUi}
+            <Grid gridSettings={gridSettings} viewBox={viewBox} />
+          </svg>
+          <div className="Editor-canvas-toolbar" id="MvMode-toolbar">
+            {mode === Mode.Drawing ? mvIcons : null}
+          </div>
+        </div>
       </div>
-      <EdgeContextMenu
-        selection={selection}
-        cp={cp}
-        setCP={setCP}
-        setSelection={setSelection}
-      />
-      {gridUi}
     </div>
   );
 };
