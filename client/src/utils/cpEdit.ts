@@ -58,7 +58,7 @@ export const snapVertex = (
     );
   };
 
-  return snapPoints.find((p: Point) => distance(p) <= SNAP_TOLERANCE);
+  return snapPoints.find((p: Point) => distance(p) <= SNAP_TOLERANCE / viewBox.zoom);
 };
 
 export const addEdge = (

@@ -18,19 +18,23 @@ export const useDrawMode = (
 
   const onMove = (start: Point, end: Point) => {
     if (cp === null) return;
-    const snapStart = snapVertex(cp, start, gridSettings, viewBox) || start;
+    const snapStart = snapVertex(cp, start, gridSettings, viewBox);
     const snapEnd = snapVertex(cp, end, gridSettings, viewBox) || end;
-    pathRef.current?.setAttribute(
-      "d",
-      `M${snapStart.x} ${snapStart.y} L ${snapEnd.x} ${snapEnd.y}`,
-    );
+    if (snapStart) {
+      pathRef.current?.setAttribute(
+        "d",
+        `M${snapStart.x} ${snapStart.y} L ${snapEnd.x} ${snapEnd.y}`,
+      );
+    }
   };
 
   const submit = (start: Point, end: Point) => {
     if (cp === null) return;
-    const snapStart = snapVertex(cp, start, gridSettings, viewBox) || start;
-    const snapEnd = snapVertex(cp, end, gridSettings, viewBox) || end;
-    setCP(addEdge(cp, snapStart, snapEnd, mvMode));
+    const snapStart = snapVertex(cp, start, gridSettings, viewBox);
+    const snapEnd = snapVertex(cp, end, gridSettings, viewBox);
+    if (snapStart && snapEnd) {
+      setCP(addEdge(cp, snapStart, snapEnd, mvMode));
+    }
   };
 
   const dragHandler = useDrag(onMove, submit, () =>
